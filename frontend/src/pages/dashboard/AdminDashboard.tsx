@@ -88,12 +88,20 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-semibold text-slate-800">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-slate-500">Monitor managers and inventory performance across warehouses.</p>
           </div>
-          <Link
-            to="/admin/sales"
-            className="inline-flex items-center justify-center rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-900"
-          >
-            View Sales
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/admin/sales"
+              className="inline-flex items-center justify-center rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-900"
+            >
+              View Sales
+            </Link>
+            <Link
+              to="/admin/forecast"
+              className="inline-flex items-center justify-center rounded-md border border-midnight px-4 py-2 text-sm font-semibold text-midnight shadow-sm hover:bg-sky-100"
+            >
+              Forecast Demand
+            </Link>
+          </div>
         </header>
 
       <section className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-5">

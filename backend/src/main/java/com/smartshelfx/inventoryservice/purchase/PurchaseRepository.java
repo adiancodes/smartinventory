@@ -1,5 +1,6 @@
 package com.smartshelfx.inventoryservice.purchase;
 
+import com.smartshelfx.inventoryservice.forecast.ProductDemandAggregate;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,4 +55,21 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
             order by sum(p.totalPrice) desc
             """)
     List<WarehouseProductSalesResponse> aggregateProductSalesByWarehouse(@Param("warehouseId") Long warehouseId);
+
+    @Query("""
+            select new com.smartshelfx.inventoryservice.forecast.ProductDemandAggregate(
+                p.product.id,
+                p.product.name,
+                p.product.sku,
+                coalesce(sum(p.quantity), 0),
+                count(p.id),
+                coalesce(sum(p.totalPrice), 0),
+                min(p.purchasedAt),
+                max(p.purchasedAt)
+            )
+            from PurchaseEntity p
+            group by p.product.id, p.product.name, p.product.sku
+            order by sum(p.quantity) desc
+            """)
+    List<ProductDemandAggregate> aggregateProductDemandTotals();
 }

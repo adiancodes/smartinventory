@@ -34,6 +34,12 @@ export function AdminTopNav() {
             >
               Sales
             </Link>
+            <Link
+              to="/admin/forecast"
+              className="rounded-md px-3 py-1 hover:bg-sky-200 hover:text-midnight"
+            >
+              Forecast
+            </Link>
           </nav>
         </div>
         <button
