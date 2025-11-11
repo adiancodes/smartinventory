@@ -4,7 +4,7 @@ import { fetchRestockSuggestions, createPurchaseOrder } from "../../api/restock"
 import { fetchWarehouses } from "../../api/warehouses";
 import { fetchProductCategories, fetchProducts } from "../../api/products";
 import { useAuth } from "../../hooks/useAuth";
-import { Product, StockStatus, WarehouseSummary } from "../../types/product";
+import type { Product, StockStatus, WarehouseSummary } from "../../types/product";
 import {
   PurchaseOrderPayload,
   RestockSuggestion
@@ -84,6 +84,13 @@ export function RestockModule({ mode }: RestockModuleProps) {
     return user?.warehouseName ?? "";
   }, [isAdmin, manualWarehouseId, user?.warehouseName, warehouses]);
 
+  const manualButtonDisabled = isAdmin ? !manualWarehouseId : !user?.warehouseId;
+  const manualDisabledMessage = isAdmin && !manualWarehouseId
+    ? "Select a warehouse above to enable manual purchase orders."
+    : mode === "MANAGER" && !user?.warehouseId
+      ? "Your account is not linked to a warehouse yet. Contact the administrator to enable manual purchase orders."
+      : "";
+
   const categoriesQuery = useQuery({
     queryKey: ["product-categories", normalizedFilters.warehouseId ?? "ALL"],
     queryFn: () => fetchProductCategories(normalizedFilters.warehouseId),
@@ -110,6 +117,7 @@ export function RestockModule({ mode }: RestockModuleProps) {
       queryClient.invalidateQueries({ queryKey: ["restock", "suggestions"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
       setSelectedSuggestion(null);
+      setManualModalOpen(false);
     }
   });
 
@@ -132,6 +140,21 @@ export function RestockModule({ mode }: RestockModuleProps) {
     setSelectedSuggestion(null);
   };
 
+  const handleOpenManualModal = () => {
+    if (manualButtonDisabled) {
+      return;
+    }
+    if (manualWarehouseId) {
+      queryClient.prefetchQuery({
+        queryKey: ["manual-purchase-order", manualWarehouseId],
+        queryFn: () => fetchProducts({ warehouseId: manualWarehouseId })
+      }).catch(() => {
+        // Prefetch errors surface via modal query; no-op here.
+      });
+    }
+    setManualModalOpen(true);
+  };
+
   const handleCreatePurchaseOrder = async (payload: PurchaseOrderPayload) => {
     await createOrderMutation.mutateAsync(payload);
     window.alert("Purchase order created successfully.");
@@ -140,8 +163,6 @@ export function RestockModule({ mode }: RestockModuleProps) {
   const stockStatusOptions: StockStatusFilter[] = ["ALL", "LOW_STOCK", "OUT_OF_STOCK"];
   const categories = categoriesQuery.data ?? [];
   const summaryCount = suggestions.length;
-
-  const isAdmin = mode === "ADMIN";
   const selectedWarehouseName = useMemo(() => {
     if (!isAdmin) {
       return user?.warehouseName ?? "";
@@ -238,6 +259,34 @@ export function RestockModule({ mode }: RestockModuleProps) {
             </button>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-xl bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">Manual Purchase Order</h2>
+            <p className="text-sm text-slate-500">
+              Build a purchase order from any product in your catalog.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={manualButtonDisabled}
+            onClick={handleOpenManualModal}
+          >
+            New Purchase Order
+          </button>
+        </div>
+        {manualDisabledMessage && (
+          <p className="mt-4 text-sm text-slate-500">{manualDisabledMessage}</p>
+        )}
+        {manualModalOpen && manualProductsQuery.isLoading && (
+          <p className="mt-4 text-sm text-slate-500">Loading products...</p>
+        )}
+        {manualModalOpen && manualProductsQuery.isError && (
+          <p className="mt-4 text-sm text-red-500">Unable to load products right now.</p>
+        )}
       </section>
 
       <section className="rounded-xl bg-white p-6 shadow-sm">
@@ -349,13 +398,31 @@ export function RestockModule({ mode }: RestockModuleProps) {
 
       <PurchaseOrderModal
         open={Boolean(selectedSuggestion)}
+        context="suggestion"
         mode={mode}
         suggestion={selectedSuggestion}
         warehouses={warehouses}
+        warehouseId={selectedSuggestion?.warehouseId ?? null}
+        warehouseName={selectedSuggestion?.warehouseName ?? ""}
         availableSuggestions={activeVendorSuggestions}
         submitting={createOrderMutation.isPending}
         onSubmit={handleCreatePurchaseOrder}
         onClose={handleCloseModal}
+      />
+
+      <PurchaseOrderModal
+        open={manualModalOpen}
+        context="manual"
+        mode={mode}
+        warehouses={warehouses}
+        warehouseId={manualWarehouseId ?? null}
+        warehouseName={manualWarehouseName}
+        productCatalog={manualProductsQuery.data ?? []}
+        submitting={createOrderMutation.isPending}
+        catalogLoading={manualProductsQuery.isLoading}
+        catalogErrored={manualProductsQuery.isError}
+        onSubmit={handleCreatePurchaseOrder}
+        onClose={() => setManualModalOpen(false)}
       />
     </div>
   );
@@ -363,11 +430,17 @@ export function RestockModule({ mode }: RestockModuleProps) {
 
 interface PurchaseOrderModalProps {
   open: boolean;
+  context: "suggestion" | "manual";
   mode: "ADMIN" | "MANAGER";
-  suggestion: RestockSuggestion | null;
+  suggestion?: RestockSuggestion | null;
   warehouses: WarehouseSummary[];
-  availableSuggestions: RestockSuggestion[];
+  warehouseId: number | null;
+  warehouseName?: string;
+  availableSuggestions?: RestockSuggestion[];
+  productCatalog?: Product[];
   submitting: boolean;
+  catalogLoading?: boolean;
+  catalogErrored?: boolean;
   onSubmit: (payload: PurchaseOrderPayload) => Promise<void>;
   onClose: () => void;
 }
@@ -382,11 +455,17 @@ type DraftItem = {
 
 function PurchaseOrderModal({
   open,
+  context,
   mode,
   suggestion,
   warehouses,
-  availableSuggestions,
+  warehouseId,
+  warehouseName: warehouseNameProp,
+  availableSuggestions = [],
+  productCatalog = [],
   submitting,
+  catalogLoading = false,
+  catalogErrored = false,
   onSubmit,
   onClose
 }: PurchaseOrderModalProps) {
@@ -402,33 +481,38 @@ function PurchaseOrderModal({
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !suggestion) {
+    if (!open) {
       return;
     }
 
-    setVendorName(suggestion.vendor);
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 7);
+
     setVendorEmail("");
     setVendorPhone("");
     setVendorContactPreference("EMAIL");
     setNotes("");
     setSendEmail(true);
     setSendSms(false);
-
-    const defaultDate = new Date();
-    defaultDate.setDate(defaultDate.getDate() + 7);
     setExpectedDate(defaultDate.toISOString().slice(0, 10));
-
-    setItems([
-      {
-        productId: suggestion.productId,
-        productName: suggestion.productName,
-        productSku: suggestion.productSku,
-        quantity: suggestion.suggestedReorderQuantity,
-        unitPrice: Number(suggestion.unitPrice ?? 0)
-      }
-    ]);
     setFormError(null);
-  }, [open, suggestion]);
+
+    if (context === "suggestion" && suggestion) {
+      setVendorName(suggestion.vendor);
+      setItems([
+        {
+          productId: suggestion.productId,
+          productName: suggestion.productName,
+          productSku: suggestion.productSku,
+          quantity: suggestion.suggestedReorderQuantity,
+          unitPrice: Number(suggestion.unitPrice ?? 0)
+        }
+      ]);
+    } else {
+      setVendorName("");
+      setItems([]);
+    }
+  }, [open, context, suggestion]);
 
   useEffect(() => {
     if (!open) {
@@ -436,16 +520,32 @@ function PurchaseOrderModal({
     }
   }, [open]);
 
-  if (!open || !suggestion) {
+  if (!open) {
     return null;
   }
 
-  const warehouseName = (() => {
-    if (mode === "ADMIN") {
-      const warehouse = warehouses.find((item) => item.id === suggestion.warehouseId);
-      return warehouse ? `${warehouse.name} (${warehouse.locationCode})` : "Selected Warehouse";
+  if (context === "suggestion" && !suggestion) {
+    return null;
+  }
+
+  const resolvedWarehouseName = (() => {
+    if (warehouseNameProp && warehouseNameProp.trim()) {
+      return warehouseNameProp;
     }
-    return suggestion.warehouseName;
+    if (context === "suggestion" && suggestion) {
+      if (mode === "ADMIN") {
+        const warehouse = warehouses.find((item) => item.id === suggestion.warehouseId);
+        return warehouse ? `${warehouse.name} (${warehouse.locationCode})` : "Selected Warehouse";
+      }
+      return suggestion.warehouseName;
+    }
+    if (warehouseId) {
+      const warehouse = warehouses.find((item) => item.id === warehouseId);
+      if (warehouse) {
+        return `${warehouse.name} (${warehouse.locationCode})`;
+      }
+    }
+    return "Select a warehouse";
   })();
 
   const handleItemChange = (index: number, key: keyof DraftItem, value: number) => {
@@ -460,31 +560,68 @@ function PurchaseOrderModal({
     setItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleAddSuggestedItem = (productId: number) => {
-    const candidate = availableSuggestions.find((item) => item.productId === productId);
-    if (!candidate) {
-      return;
-    }
-    setItems((prev) => {
-      if (prev.some((item) => item.productId === candidate.productId)) {
-        return prev;
+  const handleAddItem = (productId: number) => {
+    if (context === "suggestion") {
+      const candidate = availableSuggestions.find((item) => item.productId === productId);
+      if (!candidate) {
+        return;
       }
-      return [
-        ...prev,
-        {
-          productId: candidate.productId,
-          productName: candidate.productName,
-          productSku: candidate.productSku,
-          quantity: candidate.suggestedReorderQuantity,
-          unitPrice: Number(candidate.unitPrice ?? 0)
+      setItems((prev) => {
+        if (prev.some((item) => item.productId === candidate.productId)) {
+          return prev;
         }
-      ];
-    });
+        return [
+          ...prev,
+          {
+            productId: candidate.productId,
+            productName: candidate.productName,
+            productSku: candidate.productSku,
+            quantity: candidate.suggestedReorderQuantity,
+            unitPrice: Number(candidate.unitPrice ?? 0)
+          }
+        ];
+      });
+      if (!vendorName.trim() && candidate.vendor) {
+        setVendorName(candidate.vendor);
+      }
+    } else {
+      const candidate = productCatalog.find((item) => item.id === productId);
+      if (!candidate) {
+        return;
+      }
+      setItems((prev) => {
+        if (prev.some((item) => item.productId === candidate.id)) {
+          return prev;
+        }
+        const initialQuantity = candidate.reorderLevel > 0 ? candidate.reorderLevel : 1;
+        const initialUnitPrice = candidate.price && candidate.price > 0 ? candidate.price : 1;
+        return [
+          ...prev,
+          {
+            productId: candidate.id,
+            productName: candidate.name,
+            productSku: candidate.sku,
+            quantity: initialQuantity,
+            unitPrice: Number(initialUnitPrice)
+          }
+        ];
+      });
+      if (!vendorName.trim() && candidate.vendor) {
+        setVendorName(candidate.vendor);
+      }
+    }
   };
 
-  const availableAdditions = availableSuggestions.filter(
-    (item) => !items.some((draft) => draft.productId === item.productId)
-  );
+  const suggestionAdditions = context === "suggestion"
+    ? availableSuggestions.filter((item) => !items.some((draft) => draft.productId === item.productId))
+    : [];
+
+  const manualAdditions = context === "manual"
+    ? productCatalog.filter((product) => !items.some((draft) => draft.productId === product.id))
+    : [];
+
+  const additionOptions = context === "suggestion" ? suggestionAdditions : manualAdditions;
+  const additionLabel = context === "suggestion" ? "Add Suggested Item" : "Add Product";
 
   const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
@@ -506,6 +643,10 @@ function PurchaseOrderModal({
       setFormError("Unit price must be greater than zero");
       return;
     }
+    if (!warehouseId) {
+      setFormError("Select a warehouse before generating a purchase order.");
+      return;
+    }
 
     const payload: PurchaseOrderPayload = {
       vendorName: vendorName.trim(),
@@ -513,7 +654,7 @@ function PurchaseOrderModal({
       vendorPhone: vendorPhone.trim() || undefined,
       vendorContactPreference: vendorContactPreference,
       notes: notes.trim() || undefined,
-      warehouseId: suggestion.warehouseId,
+      warehouseId,
       expectedDeliveryDate: expectedDate ? new Date(`${expectedDate}T00:00:00`).toISOString() : undefined,
       items: items.map((item) => ({
         productId: item.productId,
@@ -540,7 +681,7 @@ function PurchaseOrderModal({
         <header className="flex items-start justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-800">Generate Purchase Order</h3>
-            <p className="text-sm text-slate-500">{warehouseName}</p>
+            <p className="text-sm text-slate-500">{resolvedWarehouseName}</p>
           </div>
           <button
             type="button"
@@ -631,31 +772,46 @@ function PurchaseOrderModal({
           <div className="mt-6 rounded-lg border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
               <h4 className="text-sm font-semibold text-slate-600">Order Items</h4>
-              {availableAdditions.length > 0 && (
+              {additionOptions.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
-                  <label htmlFor="addItem" className="text-xs uppercase text-slate-500">Add Suggested Item</label>
+                  <label htmlFor="addItem" className="text-xs uppercase text-slate-500">{additionLabel}</label>
                   <select
                     id="addItem"
                     className="input"
                     defaultValue=""
+                    disabled={context === "manual" && (catalogLoading || catalogErrored)}
                     onChange={(event) => {
                       const productId = Number(event.target.value);
                       if (productId) {
-                        handleAddSuggestedItem(productId);
+                        handleAddItem(productId);
                         event.target.value = "";
                       }
                     }}
                   >
                     <option value="">Select</option>
-                    {availableAdditions.map((item) => (
-                      <option key={item.productId} value={item.productId}>
-                        {item.productName} · Suggest {item.suggestedReorderQuantity}
-                      </option>
-                    ))}
+                    {context === "suggestion"
+                      ? suggestionAdditions.map((item) => (
+                          <option key={item.productId} value={item.productId}>
+                            {item.productName} · Suggest {item.suggestedReorderQuantity}
+                          </option>
+                        ))
+                      : manualAdditions.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} · SKU {product.sku}
+                          </option>
+                        ))}
                   </select>
                 </div>
               )}
             </div>
+            {context === "manual" && catalogLoading && (
+              <p className="px-4 py-3 text-sm text-slate-500">Fetching product catalog...</p>
+            )}
+            {context === "manual" && catalogErrored && (
+              <p className="px-4 py-3 text-sm text-red-500">
+                Unable to load products for this warehouse. Try again later.
+              </p>
+            )}
             <div className="divide-y">
               {items.map((item, index) => (
                 <div key={item.productId} className="grid grid-cols-1 gap-4 px-4 py-3 md:grid-cols-5 md:items-center">
