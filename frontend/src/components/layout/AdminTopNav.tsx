@@ -11,22 +11,28 @@ export function AdminTopNav() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-sky-200 bg-sky-100/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-6">
           <span className="text-lg font-bold text-midnight">SmartShelfX Admin</span>
           <nav className="flex items-center gap-4 text-sm font-semibold text-slate-600">
             <Link
               to="/admin/dashboard"
-              className="rounded-md px-3 py-1 hover:bg-slate-100 hover:text-midnight"
+              className="rounded-md px-3 py-1 hover:bg-sky-200 hover:text-midnight"
             >
               Home
             </Link>
             <Link
               to="/admin/inventory"
-              className="rounded-md px-3 py-1 hover:bg-slate-100 hover:text-midnight"
+              className="rounded-md px-3 py-1 hover:bg-sky-200 hover:text-midnight"
             >
               Inventory
+            </Link>
+            <Link
+              to="/admin/sales"
+              className="rounded-md px-3 py-1 hover:bg-sky-200 hover:text-midnight"
+            >
+              Sales
             </Link>
           </nav>
         </div>

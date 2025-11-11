@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchProducts } from "../../api/products";
+import { fetchManagerSalesSummary } from "../../api/purchases";
 import { Product } from "../../types/product";
 
 export default function ManagerDashboard() {
@@ -15,6 +16,12 @@ export default function ManagerDashboard() {
     queryFn: () => fetchProducts({ warehouseId: user?.warehouseId ?? undefined }),
     enabled: Boolean(user?.warehouseId)
   });
+  const salesSummaryQuery = useQuery({
+    queryKey: ["manager", "sales-summary", user?.warehouseId],
+    queryFn: fetchManagerSalesSummary,
+    enabled: Boolean(user?.warehouseId)
+  });
+  const salesSummary = salesSummaryQuery.data;
 
   const currencyFormatter = useMemo(
     () =>
@@ -41,7 +48,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-ash">
-      <header className="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
+      <header className="flex items-center justify-between border-b border-sky-200 bg-sky-100 px-8 py-4 shadow-sm">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Store Manager Dashboard</h1>
           <p className="text-sm text-slate-500">Welcome, {user?.fullName}</p>
@@ -72,7 +79,7 @@ export default function ManagerDashboard() {
           </nav>
         </aside>
         <main className="flex-1 overflow-y-auto p-8">
-          <section className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <section className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-5">
             <div className="rounded-xl bg-white p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Total Products</p>
               <p className="mt-4 text-3xl font-semibold text-slate-800">{totalProducts}</p>
@@ -88,6 +95,21 @@ export default function ManagerDashboard() {
             <div className="rounded-xl bg-white p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Out of Stock</p>
               <p className="mt-4 text-3xl font-semibold text-red-600">{outOfStockCount}</p>
+            </div>
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Sales</p>
+              {salesSummaryQuery.isLoading ? (
+                <p className="mt-4 text-sm text-slate-500">Loading...</p>
+              ) : (
+                <div>
+                  <p className="mt-4 text-3xl font-semibold text-slate-800">
+                    {currencyFormatter.format(salesSummary?.totalRevenue ?? 0)}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    {(salesSummary?.totalOrders ?? 0).toLocaleString()} orders · {(salesSummary?.totalItems ?? 0).toLocaleString()} items
+                  </p>
+                </div>
+              )}
             </div>
           </section>
 

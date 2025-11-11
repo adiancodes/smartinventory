@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { fetchProducts } from "../../api/products";
+import { fetchAdminSalesSummary, fetchAdminSalesByWarehouse } from "../../api/purchases";
+import { WarehouseSalesSummary } from "../../types/purchase";
 import { Product } from "../../types/product";
 import { AdminTopNav } from "../../components/layout/AdminTopNav";
 
@@ -35,6 +37,16 @@ export default function AdminDashboard() {
     queryKey: ["admin", "products"],
     queryFn: () => fetchProducts()
   });
+  const salesSummaryQuery = useQuery({
+    queryKey: ["admin", "sales-summary"],
+    queryFn: fetchAdminSalesSummary
+  });
+  const salesSummary = salesSummaryQuery.data;
+  const salesByWarehouseQuery = useQuery({
+    queryKey: ["admin", "sales-by-warehouse"],
+    queryFn: fetchAdminSalesByWarehouse
+  });
+  const warehouseSales = salesByWarehouseQuery.data ?? [];
 
   const products: Product[] = productsQuery.data ?? [];
   const currencyFormatter = useMemo(
@@ -57,6 +69,13 @@ export default function AdminDashboard() {
     return { lowStockItems: lowItems, outOfStockItems: outItems, totalInventoryValue: totalValue };
   }, [products]);
 
+  const maxWarehouseRevenue = useMemo(() => {
+    if (!warehouseSales.length) {
+      return 0;
+    }
+    return Math.max(...warehouseSales.map((warehouse) => Number(warehouse.totalRevenue ?? 0)));
+  }, [warehouseSales]);
+
   const lowStockCount = lowStockItems.length;
   const outOfStockCount = outOfStockItems.length;
 
@@ -64,10 +83,20 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-ash">
       <AdminTopNav />
       <main className="mx-auto max-w-7xl px-10 py-8">
-        <h1 className="text-2xl font-semibold text-slate-800">Admin Dashboard</h1>
-        <p className="mt-2 text-sm text-slate-500">Monitor managers and inventory performance across warehouses.</p>
+        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-800">Admin Dashboard</h1>
+            <p className="mt-1 text-sm text-slate-500">Monitor managers and inventory performance across warehouses.</p>
+          </div>
+          <Link
+            to="/admin/sales"
+            className="inline-flex items-center justify-center rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-900"
+          >
+            View Sales
+          </Link>
+        </header>
 
-  <section className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-4">
+      <section className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-5">
           <div className="rounded-xl bg-white p-6 shadow-md">
             <p className="text-xs font-semibold uppercase text-slate-500">Total Products</p>
             <p className="mt-4 text-3xl font-semibold text-slate-800">{products.length}</p>
@@ -94,6 +123,62 @@ export default function AdminDashboard() {
             <p className="mt-4 text-3xl font-semibold text-red-600">{outOfStockCount}</p>
             <p className="mt-2 text-xs text-slate-400">Tap to view details</p>
           </button>
+          <div className="rounded-xl bg-white p-6 shadow-md">
+            <p className="text-xs font-semibold uppercase text-slate-500">Sales</p>
+            {salesSummaryQuery.isLoading ? (
+              <p className="mt-4 text-sm text-slate-500">Loading...</p>
+            ) : (
+              <div>
+                <p className="mt-4 text-3xl font-semibold text-slate-800">
+                  {currencyFormatter.format(salesSummary?.totalRevenue ?? 0)}
+                </p>
+                <p className="mt-2 text-xs text-slate-400">
+                  {(salesSummary?.totalOrders ?? 0).toLocaleString()} orders · {(salesSummary?.totalItems ?? 0).toLocaleString()} items
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-xl bg-white p-6 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-700">Sales by Warehouse</h2>
+              <p className="text-sm text-slate-500">Visual snapshot of revenue contribution per store.</p>
+            </div>
+            <Link className="text-sm font-semibold text-midnight" to="/admin/sales">
+              See detailed report
+            </Link>
+          </div>
+          {salesByWarehouseQuery.isLoading ? (
+            <p className="mt-6 text-sm text-slate-500">Loading chart...</p>
+          ) : warehouseSales.length === 0 ? (
+            <p className="mt-6 text-sm text-slate-500">No sales recorded yet.</p>
+          ) : (
+            <div className="mt-6 flex items-end gap-6 overflow-x-auto pb-4">
+              {warehouseSales.map((warehouse: WarehouseSalesSummary) => {
+                const revenue = Number(warehouse.totalRevenue ?? 0);
+                const height = maxWarehouseRevenue > 0 ? Math.max((revenue / maxWarehouseRevenue) * 220, 10) : 10;
+                return (
+                  <div key={warehouse.warehouseId} className="flex flex-col items-center gap-2 text-sm">
+                    <div className="flex h-56 w-12 items-end rounded-lg bg-sky-100">
+                      <div
+                        className="w-full rounded-lg bg-midnight"
+                        style={{ height: `${height}px` }}
+                        title={`${warehouse.warehouseName}: ${currencyFormatter.format(revenue)}`}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="max-w-[4.5rem] truncate text-xs font-semibold text-slate-700">
+                        {warehouse.warehouseName}
+                      </p>
+                      <p className="text-[10px] text-slate-400">{warehouse.totalItems} items</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
   <section className="mt-8 rounded-xl bg-white p-6 shadow-md">

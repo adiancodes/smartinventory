@@ -5,6 +5,7 @@ import ManagerDashboard from "./pages/dashboard/ManagerDashboard";
 import ManagerInventory from "./pages/dashboard/ManagerInventory";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import AdminInventory from "./pages/dashboard/AdminInventory";
+import AdminSales from "./pages/dashboard/AdminSales";
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -27,6 +28,7 @@ export default function App() {
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> 
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/inventory" element={<AdminInventory />} />
+          <Route path="/admin/sales" element={<AdminSales />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["USER"]} />}> 

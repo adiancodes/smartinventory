@@ -125,6 +125,8 @@ public class AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getOfficialEmail(),
+        user.getCompanyName(),
+        user.getContactNumber(),
                 user.getRole().getName().name(),
                 warehouseId,
                 warehouseName,
