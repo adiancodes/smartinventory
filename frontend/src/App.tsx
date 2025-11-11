@@ -1,0 +1,40 @@
+import { Route, Routes, Navigate } from "react-router-dom";
+import LoginPage from "./pages/auth/Login";
+import RegisterPage from "./pages/auth/Register";
+import ManagerDashboard from "./pages/dashboard/ManagerDashboard";
+import ManagerInventory from "./pages/dashboard/ManagerInventory";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import AdminInventory from "./pages/dashboard/AdminInventory";
+import UserDashboard from "./pages/dashboard/UserDashboard";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
+import UnauthorizedPage from "./pages/Unauthorized";
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+  <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        <Route element={<ProtectedRoute allowedRoles={["MANAGER"]} />}> 
+          <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+          <Route path="/manager/inventory" element={<ManagerInventory />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> 
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/inventory" element={<AdminInventory />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["USER"]} />}> 
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </AuthProvider>
+  );
+}

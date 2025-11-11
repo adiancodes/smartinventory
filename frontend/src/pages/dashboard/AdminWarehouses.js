@@ -1,0 +1,11 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useQuery } from "@tanstack/react-query";
+import { fetchWarehouses } from "../../api/warehouses";
+import { AdminTopNav } from "../../components/layout/AdminTopNav";
+export default function AdminWarehouses() {
+    const { data: warehouses = [], isLoading, isError } = useQuery({
+        queryKey: ["admin", "warehouses"],
+        queryFn: fetchWarehouses
+    });
+    return (_jsxs("div", { className: "min-h-screen bg-ash", children: [_jsx(AdminTopNav, {}), _jsxs("main", { className: "mx-auto max-w-7xl px-10 py-8", children: [_jsxs("header", { className: "mb-6", children: [_jsx("h1", { className: "text-2xl font-semibold text-slate-800", children: "Warehouses" }), _jsx("p", { className: "mt-2 text-sm text-slate-500", children: "All active warehouses with their codes and locations." })] }), _jsxs("section", { className: "rounded-xl bg-white p-6 shadow-md", children: [isLoading && _jsx("p", { className: "text-sm text-slate-500", children: "Loading warehouses..." }), isError && _jsx("p", { className: "text-sm text-red-500", children: "Failed to load warehouses." }), !isLoading && !isError && warehouses.length === 0 && (_jsx("p", { className: "text-sm text-slate-500", children: "No warehouses found." })), !isLoading && !isError && warehouses.length > 0 && (_jsx("div", { className: "overflow-x-auto", children: _jsxs("table", { className: "w-full table-auto text-left text-sm", children: [_jsx("thead", { children: _jsxs("tr", { className: "border-b bg-slate-50 text-xs uppercase tracking-widest text-slate-500", children: [_jsx("th", { className: "px-4 py-2", children: "Name" }), _jsx("th", { className: "px-4 py-2", children: "Code" }), _jsx("th", { className: "px-4 py-2", children: "Active" })] }) }), _jsx("tbody", { children: warehouses.map((warehouse) => (_jsxs("tr", { className: "border-b last:border-none", children: [_jsx("td", { className: "px-4 py-3 font-medium text-slate-800", children: warehouse.name }), _jsx("td", { className: "px-4 py-3 text-slate-600", children: warehouse.locationCode }), _jsx("td", { className: "px-4 py-3 text-slate-600", children: warehouse.active ? "Active" : "Inactive" })] }, warehouse.id))) })] }) }))] })] })] }));
+}

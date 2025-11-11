@@ -1,0 +1,123 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../../hooks/useAuth";
+import { fetchProducts } from "../../api/products";
+import { Product } from "../../types/product";
+
+export default function ManagerDashboard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const warehouseName = user?.warehouseName ?? "My Store";
+
+  const productsQuery = useQuery({
+    queryKey: ["manager", "products", user?.warehouseId],
+    queryFn: () => fetchProducts({ warehouseId: user?.warehouseId ?? undefined }),
+    enabled: Boolean(user?.warehouseId)
+  });
+
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR"
+      }),
+    []
+  );
+
+  const { totalProducts, lowStockCount, outOfStockCount, lowStockItems, totalInventoryValue } = useMemo(() => {
+    const products: Product[] = productsQuery.data ?? [];
+    const totalValue = products.reduce((sum, product) => sum + (product.totalValue ?? 0), 0);
+    const lowItems = products.filter((product) => product.currentStock > 0 && product.lowStock);
+    const outItems = products.filter((product) => product.currentStock === 0);
+    return {
+      totalProducts: products.length,
+      lowStockCount: lowItems.length,
+      outOfStockCount: outItems.length,
+      lowStockItems: lowItems,
+      totalInventoryValue: totalValue
+    };
+  }, [productsQuery.data]);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-ash">
+      <header className="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-800">Store Manager Dashboard</h1>
+          <p className="text-sm text-slate-500">Welcome, {user?.fullName}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+          className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white"
+        >
+          Logout
+        </button>
+      </header>
+      <div className="flex flex-1">
+        <aside className="w-64 bg-midnight text-white">
+          <nav className="px-6 py-6 space-y-2">
+            <Link to="/manager/dashboard" className="block rounded-md bg-sunshine px-4 py-2 text-midnight font-semibold">
+              Dashboard
+            </Link>
+            <Link
+              to="/manager/inventory"
+              className="block rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              Inventory
+            </Link>
+          </nav>
+        </aside>
+        <main className="flex-1 overflow-y-auto p-8">
+          <section className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Total Products</p>
+              <p className="mt-4 text-3xl font-semibold text-slate-800">{totalProducts}</p>
+            </div>
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Inventory Value</p>
+              <p className="mt-4 text-3xl font-semibold text-slate-800">{currencyFormatter.format(totalInventoryValue)}</p>
+            </div>
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Low Stock</p>
+              <p className="mt-4 text-3xl font-semibold text-amber-600">{lowStockCount}</p>
+            </div>
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-slate-500">{warehouseName}: Out of Stock</p>
+              <p className="mt-4 text-3xl font-semibold text-red-600">{outOfStockCount}</p>
+            </div>
+          </section>
+
+          <section className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-700">Low Stock Items ({warehouseName})</h2>
+              {productsQuery.isLoading && <p className="mt-4 text-sm text-slate-500">Loading inventory...</p>}
+              {!productsQuery.isLoading && lowStockItems.length === 0 && (
+                <p className="mt-4 text-sm text-slate-500">No low stock items. Well done!</p>
+              )}
+              {!productsQuery.isLoading && lowStockItems.length > 0 && (
+                <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                  {lowStockItems.map((product) => (
+                    <li key={product.id} className="flex items-center justify-between rounded-md bg-amber-50 px-3 py-2">
+                      <span className="font-medium text-slate-700">{product.name}</span>
+                      <span className="text-xs uppercase text-amber-600">
+                        Stock: {product.currentStock} / Reorder: {product.reorderLevel}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-700">Store Widget</h2>
+              <p className="mt-4 text-sm text-slate-500">Purchase history - coming soon.</p>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
+}
