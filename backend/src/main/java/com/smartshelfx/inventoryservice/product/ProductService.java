@@ -90,6 +90,29 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public List<String> listCategories(SecurityUserDetails currentUser,
+                                       Optional<Long> requestedWarehouseId) {
+        boolean isAdmin = hasRole(currentUser, RoleName.ADMIN);
+        boolean isManager = hasRole(currentUser, RoleName.MANAGER);
+
+        if (isAdmin) {
+            return requestedWarehouseId
+                    .map(productRepository::findDistinctCategoriesByWarehouseId)
+                    .orElseGet(productRepository::findDistinctCategories);
+        }
+
+        if (isManager) {
+            Long warehouseId = ensureWarehouseAssigned(currentUser);
+            if (requestedWarehouseId.isPresent() && !requestedWarehouseId.get().equals(warehouseId)) {
+                throw new IllegalArgumentException("Managers can only access their own warehouse categories");
+            }
+            return productRepository.findDistinctCategoriesByWarehouseId(warehouseId);
+        }
+
+        return productRepository.findDistinctCategories();
+    }
+
     private void updateEntity(ProductEntity product, ProductRequest request, WarehouseEntity warehouse) {
         if (request.maxStockLevel() < request.reorderLevel()) {
             throw new IllegalArgumentException("Max stock level cannot be less than min stock level");

@@ -43,6 +43,13 @@ public class ProductController {
         Optional.ofNullable(stockStatus));
     }
 
+    @GetMapping("/categories")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
+    public List<String> listCategories(@AuthenticationPrincipal SecurityUserDetails currentUser,
+                                       @RequestParam(name = "warehouseId", required = false) Long warehouseId) {
+        return productService.listCategories(currentUser, Optional.ofNullable(warehouseId));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
