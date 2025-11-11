@@ -28,3 +28,12 @@ export async function updateProduct(id, payload) {
 export async function deleteProduct(id) {
     await api.delete(`/products/${id}`);
 }
+export async function fetchProductCategories(warehouseId) {
+    const params = new URLSearchParams();
+    if (warehouseId) {
+        params.set("warehouseId", String(warehouseId));
+    }
+    const query = params.toString();
+    const response = await api.get(`/products/categories${query ? `?${query}` : ""}`);
+    return response.data;
+}

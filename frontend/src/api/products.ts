@@ -35,3 +35,13 @@ export async function updateProduct(id: number, payload: ProductPayload): Promis
 export async function deleteProduct(id: number): Promise<void> {
   await api.delete(`/products/${id}`);
 }
+
+export async function fetchProductCategories(warehouseId?: number): Promise<string[]> {
+  const params = new URLSearchParams();
+  if (warehouseId) {
+    params.set("warehouseId", String(warehouseId));
+  }
+  const query = params.toString();
+  const response = await api.get<string[]>(`/products/categories${query ? `?${query}` : ""}`);
+  return response.data;
+}

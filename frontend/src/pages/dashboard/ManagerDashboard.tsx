@@ -76,6 +76,12 @@ export default function ManagerDashboard() {
             >
               Inventory
             </Link>
+            <Link
+              to="/manager/restock"
+              className="block rounded-md px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              Restock
+            </Link>
           </nav>
         </aside>
         <main className="flex-1 overflow-y-auto p-8">

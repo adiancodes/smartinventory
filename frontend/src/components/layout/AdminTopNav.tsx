@@ -40,6 +40,12 @@ export function AdminTopNav() {
             >
               Forecast
             </Link>
+            <Link
+              to="/admin/restock"
+              className="rounded-md px-3 py-1 hover:bg-sky-200 hover:text-midnight"
+            >
+              Restock
+            </Link>
           </nav>
         </div>
         <button

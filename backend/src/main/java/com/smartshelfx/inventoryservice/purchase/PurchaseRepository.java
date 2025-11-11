@@ -72,4 +72,22 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
             order by sum(p.quantity) desc
             """)
     List<ProductDemandAggregate> aggregateProductDemandTotals();
+
+    @Query("""
+            select new com.smartshelfx.inventoryservice.forecast.ProductDemandAggregate(
+                p.product.id,
+                p.product.name,
+                p.product.sku,
+                coalesce(sum(p.quantity), 0),
+                count(p.id),
+                coalesce(sum(p.totalPrice), 0),
+                min(p.purchasedAt),
+                max(p.purchasedAt)
+            )
+            from PurchaseEntity p
+            where p.warehouse.id = :warehouseId
+            group by p.product.id, p.product.name, p.product.sku
+            order by sum(p.quantity) desc
+            """)
+    List<ProductDemandAggregate> aggregateProductDemandTotalsByWarehouse(@Param("warehouseId") Long warehouseId);
 }

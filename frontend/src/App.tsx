@@ -3,10 +3,12 @@ import LoginPage from "./pages/auth/Login";
 import RegisterPage from "./pages/auth/Register";
 import ManagerDashboard from "./pages/dashboard/ManagerDashboard";
 import ManagerInventory from "./pages/dashboard/ManagerInventory";
+import ManagerRestock from "./pages/dashboard/ManagerRestock";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import AdminInventory from "./pages/dashboard/AdminInventory";
 import AdminSales from "./pages/dashboard/AdminSales";
 import AdminDemandForecast from "./pages/dashboard/AdminDemandForecast";
+import AdminRestock from "./pages/dashboard/AdminRestock";
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -24,6 +26,7 @@ export default function App() {
         <Route element={<ProtectedRoute allowedRoles={["MANAGER"]} />}> 
           <Route path="/manager/dashboard" element={<ManagerDashboard />} />
           <Route path="/manager/inventory" element={<ManagerInventory />} />
+          <Route path="/manager/restock" element={<ManagerRestock />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}> 
@@ -31,6 +34,7 @@ export default function App() {
           <Route path="/admin/inventory" element={<AdminInventory />} />
           <Route path="/admin/sales" element={<AdminSales />} />
           <Route path="/admin/forecast" element={<AdminDemandForecast />} />
+          <Route path="/admin/restock" element={<AdminRestock />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["USER"]} />}> 
