@@ -9,6 +9,7 @@ import AdminInventory from "./pages/dashboard/AdminInventory";
 import AdminSales from "./pages/dashboard/AdminSales";
 import AdminDemandForecast from "./pages/dashboard/AdminDemandForecast";
 import AdminRestock from "./pages/dashboard/AdminRestock";
+import AdminAnalytics from "./pages/dashboard/AdminAnalytics";
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/admin/sales" element={<AdminSales />} />
           <Route path="/admin/forecast" element={<AdminDemandForecast />} />
           <Route path="/admin/restock" element={<AdminRestock />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["USER"]} />}> 

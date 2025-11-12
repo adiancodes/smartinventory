@@ -7,6 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.smartshelfx.inventoryservice.analytics.MonthlySalesAggregate;
+import com.smartshelfx.inventoryservice.analytics.ProductSalesAggregate;
+import java.time.OffsetDateTime;
+
 public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> {
 
     List<PurchaseEntity> findAllByUser_IdOrderByPurchasedAtDesc(Long userId);
@@ -90,4 +94,38 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
             order by sum(p.quantity) desc
             """)
     List<ProductDemandAggregate> aggregateProductDemandTotalsByWarehouse(@Param("warehouseId") Long warehouseId);
+
+        @Query("""
+                        select new com.smartshelfx.inventoryservice.analytics.MonthlySalesAggregate(
+                                year(p.purchasedAt),
+                                month(p.purchasedAt),
+                                coalesce(sum(p.totalPrice), 0),
+                                coalesce(sum(p.quantity), 0)
+                        )
+                        from PurchaseEntity p
+                        where p.purchasedAt between :start and :end
+                            and (:warehouseId is null or p.warehouse.id = :warehouseId)
+                        group by year(p.purchasedAt), month(p.purchasedAt)
+                        order by year(p.purchasedAt), month(p.purchasedAt)
+                        """)
+        List<MonthlySalesAggregate> aggregateMonthlySales(@Param("warehouseId") Long warehouseId,
+                                                                                                            @Param("start") OffsetDateTime start,
+                                                                                                            @Param("end") OffsetDateTime end);
+
+        @Query("""
+                        select new com.smartshelfx.inventoryservice.analytics.ProductSalesAggregate(
+                                p.product.id,
+                                p.productName,
+                                p.productSku,
+                                coalesce(sum(p.quantity), 0),
+                                coalesce(sum(p.totalPrice), 0)
+                        )
+                        from PurchaseEntity p
+                        where p.purchasedAt between :start and :end
+                            and (:warehouseId is null or p.warehouse.id = :warehouseId)
+                        group by p.product.id, p.productName, p.productSku
+                        """)
+        List<ProductSalesAggregate> aggregateSalesByProduct(@Param("warehouseId") Long warehouseId,
+                                                                                                                @Param("start") OffsetDateTime start,
+                                                                                                                @Param("end") OffsetDateTime end);
 }
