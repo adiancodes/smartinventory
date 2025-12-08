@@ -16,6 +16,26 @@ export interface PurchaseHistoryResponse {
   totalSpend: number;
 }
 
+export interface WarehousePurchaseHistoryItem {
+  purchaseId: number;
+  productId: number;
+  productName: string;
+  productSku: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  purchasedAt: string;
+  buyerName: string;
+  buyerEmail: string;
+}
+
+export interface WarehousePurchaseHistoryResponse {
+  purchases: WarehousePurchaseHistoryItem[];
+  totalOrders: number;
+  totalItems: number;
+  totalRevenue: number;
+}
+
 export interface SalesSummaryResponse {
   totalOrders: number;
   totalItems: number;

@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 import { fetchProducts } from "../../api/products";
 import { fetchAdminSalesSummary, fetchAdminSalesByWarehouse } from "../../api/purchases";
-import { WarehouseSalesSummary } from "../../types/purchase";
 import { Product } from "../../types/product";
 import { AdminTopNav } from "../../components/layout/AdminTopNav";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ManagerSummary {
   id: number;
@@ -57,6 +57,31 @@ export default function AdminDashboard() {
       }),
     []
   );
+  const compactCurrencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        notation: "compact",
+        maximumFractionDigits: 1
+      }),
+    []
+  );
+  const salesChartData = useMemo(
+    () =>
+      warehouseSales.map((warehouse, index) => {
+        const revenue = Number(warehouse.totalRevenue ?? 0);
+        const items = Number(warehouse.totalItems ?? 0);
+        const warehouseName = warehouse.warehouseName ?? "Unknown";
+        return {
+          key: warehouse.warehouseId ?? `${warehouseName}-${index}`,
+          warehouse: warehouseName,
+          revenue,
+          items
+        };
+      }),
+    [warehouseSales]
+  );
   const [showLowStockModal, setShowLowStockModal] = useState(false);
   const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
   const [selectedManager, setSelectedManager] = useState<ManagerDetail | null>(null);
@@ -68,13 +93,6 @@ export default function AdminDashboard() {
     const totalValue = products.reduce((sum, product) => sum + (product.totalValue ?? 0), 0);
     return { lowStockItems: lowItems, outOfStockItems: outItems, totalInventoryValue: totalValue };
   }, [products]);
-
-  const maxWarehouseRevenue = useMemo(() => {
-    if (!warehouseSales.length) {
-      return 0;
-    }
-    return Math.max(...warehouseSales.map((warehouse) => Number(warehouse.totalRevenue ?? 0)));
-  }, [warehouseSales]);
 
   const lowStockCount = lowStockItems.length;
   const outOfStockCount = outOfStockItems.length;
@@ -163,28 +181,41 @@ export default function AdminDashboard() {
           ) : warehouseSales.length === 0 ? (
             <p className="mt-6 text-sm text-slate-500">No sales recorded yet.</p>
           ) : (
-            <div className="mt-6 flex items-end gap-6 overflow-x-auto pb-4">
-              {warehouseSales.map((warehouse: WarehouseSalesSummary) => {
-                const revenue = Number(warehouse.totalRevenue ?? 0);
-                const height = maxWarehouseRevenue > 0 ? Math.max((revenue / maxWarehouseRevenue) * 220, 10) : 10;
-                return (
-                  <div key={warehouse.warehouseId} className="flex flex-col items-center gap-2 text-sm">
-                    <div className="flex h-56 w-12 items-end rounded-lg bg-sky-100">
-                      <div
-                        className="w-full rounded-lg bg-midnight"
-                        style={{ height: `${height}px` }}
-                        title={`${warehouse.warehouseName}: ${currencyFormatter.format(revenue)}`}
-                      />
-                    </div>
-                    <div className="text-center">
-                      <p className="max-w-[4.5rem] truncate text-xs font-semibold text-slate-700">
-                        {warehouse.warehouseName}
-                      </p>
-                      <p className="text-[10px] text-slate-400">{warehouse.totalItems} items</p>
-                    </div>
+            <div className="mt-6 space-y-6">
+              <div className="h-72 w-full">
+                <ResponsiveContainer>
+                  <BarChart data={salesChartData} margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="warehouse" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value: number) =>
+                        compactCurrencyFormatter.format(value).replace(/^₹\s?/, "₹ ")
+                      }
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(15, 23, 42, 0.05)" }}
+                      formatter={(value: number) => currencyFormatter.format(value)}
+                      labelFormatter={(label, payload) => {
+                        const items = payload?.[0]?.payload.items ?? 0;
+                        return `${label} · ${items.toLocaleString()} items`;
+                      }}
+                    />
+                    <Bar dataKey="revenue" radius={[8, 8, 0, 0]} fill="#0f172a" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-3 text-xs text-slate-600 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {salesChartData.map((entry) => (
+                  <div key={entry.key} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-semibold text-slate-700">{entry.warehouse}</p>
+                    <p className="mt-1 text-sm font-semibold text-midnight">
+                      {currencyFormatter.format(entry.revenue)}
+                    </p>
+                    <p className="text-xs text-slate-500">{entry.items.toLocaleString()} items</p>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           )}
         </section>

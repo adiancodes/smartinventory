@@ -58,4 +58,10 @@ public class PurchaseController {
     public SalesSummaryResponse managerSummary(@AuthenticationPrincipal SecurityUserDetails currentUser) {
         return purchaseService.managerSummary(currentUser);
     }
+
+    @GetMapping("/manager/history")
+    @PreAuthorize("hasRole('MANAGER')")
+    public WarehousePurchaseHistoryResponse managerHistory(@AuthenticationPrincipal SecurityUserDetails currentUser) {
+        return purchaseService.managerPurchaseHistory(currentUser);
+    }
 }

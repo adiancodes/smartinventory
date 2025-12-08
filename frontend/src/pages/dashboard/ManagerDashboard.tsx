@@ -3,8 +3,9 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchProducts } from "../../api/products";
-import { fetchManagerSalesSummary } from "../../api/purchases";
+import { fetchManagerPurchaseHistory, fetchManagerSalesSummary } from "../../api/purchases";
 import { Product } from "../../types/product";
+import type { WarehousePurchaseHistoryResponse } from "../../types/purchase";
 
 export default function ManagerDashboard() {
   const { user, logout } = useAuth();
@@ -22,6 +23,12 @@ export default function ManagerDashboard() {
     enabled: Boolean(user?.warehouseId)
   });
   const salesSummary = salesSummaryQuery.data;
+  const purchaseHistoryQuery = useQuery<WarehousePurchaseHistoryResponse>({
+    queryKey: ["manager", "purchase-history", user?.warehouseId],
+    queryFn: fetchManagerPurchaseHistory,
+    enabled: Boolean(user?.warehouseId)
+  });
+  const purchaseHistory = purchaseHistoryQuery.data;
 
   const currencyFormatter = useMemo(
     () =>
@@ -45,6 +52,22 @@ export default function ManagerDashboard() {
       totalInventoryValue: totalValue
     };
   }, [productsQuery.data]);
+
+  const historyTotals = useMemo(() => {
+    if (!purchaseHistory) {
+      return { totalOrders: 0, totalItems: 0, totalRevenue: 0 };
+    }
+    return {
+      totalOrders: purchaseHistory.totalOrders,
+      totalItems: purchaseHistory.totalItems,
+      totalRevenue: purchaseHistory.totalRevenue
+    };
+  }, [purchaseHistory]);
+
+  const historyFormatter = useMemo(
+    () => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+    []
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-ash">
@@ -141,7 +164,47 @@ export default function ManagerDashboard() {
             </div>
             <div className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-700">Store Widget</h2>
-              <p className="mt-4 text-sm text-slate-500">Purchase history - coming soon.</p>
+              {purchaseHistoryQuery.isLoading ? (
+                <p className="mt-4 text-sm text-slate-500">Loading purchase history...</p>
+              ) : !purchaseHistory || purchaseHistory.purchases.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">No purchase activity recorded yet.</p>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                      {historyTotals.totalOrders.toLocaleString()} orders
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                      {historyTotals.totalItems.toLocaleString()} items sold
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                      {currencyFormatter.format(historyTotals.totalRevenue)} revenue
+                    </span>
+                  </div>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    {purchaseHistory.purchases.slice(0, 8).map((purchase) => (
+                      <li key={purchase.purchaseId} className="rounded-lg border border-slate-200 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-800">{purchase.productName}</p>
+                            <p className="text-xs text-slate-400">SKU {purchase.productSku}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-midnight">
+                              {currencyFormatter.format(purchase.totalPrice)}
+                            </p>
+                            <p className="text-xs text-slate-500">Qty {purchase.quantity}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap justify-between text-xs text-slate-500">
+                          <span>{purchase.buyerName ?? "Customer"}</span>
+                          <span>{historyFormatter.format(new Date(purchase.purchasedAt))}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
         </main>

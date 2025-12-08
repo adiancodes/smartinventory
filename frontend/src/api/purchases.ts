@@ -4,6 +4,7 @@ import {
   PurchaseHistoryResponse,
   PurchaseResponse,
   SalesSummaryResponse,
+  WarehousePurchaseHistoryResponse,
   WarehouseProductSales,
   WarehouseSalesSummary
 } from "../types/purchase";
@@ -25,6 +26,11 @@ export async function fetchAdminSalesSummary(): Promise<SalesSummaryResponse> {
 
 export async function fetchManagerSalesSummary(): Promise<SalesSummaryResponse> {
   const response = await api.get<SalesSummaryResponse>("/purchases/summary/manager");
+  return response.data;
+}
+
+export async function fetchManagerPurchaseHistory(): Promise<WarehousePurchaseHistoryResponse> {
+  const response = await api.get<WarehousePurchaseHistoryResponse>("/purchases/manager/history");
   return response.data;
 }
 

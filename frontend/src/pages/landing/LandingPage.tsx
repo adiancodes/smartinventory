@@ -1,0 +1,97 @@
+import { Link } from "react-router-dom";
+
+const heroImageUrl =
+  "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=2000&q=80";
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900">
+      <header className="sticky top-0 z-30 flex w-full justify-center backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-white/40 bg-white/40 px-6 py-4 shadow-lg shadow-white/20 transition sm:px-8">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-semibold text-midnight">SmartShelfX</span>
+          </div>
+          <nav className="flex items-center gap-3 text-sm font-medium text-slate-600 sm:gap-4">
+            <Link
+              to="/login"
+              className="rounded-full border border-midnight/60 px-4 py-2 transition hover:bg-midnight hover:text-white sm:px-5"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="rounded-full bg-sunshine px-4 py-2 font-semibold text-midnight shadow-sm transition hover:bg-sunshine/80 sm:px-5"
+            >
+              Get Started
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 max-w-3xl lg:block">
+          <div className="absolute inset-0 bg-gradient-to-l from-sky-200/90 via-sky-100/95 to-sky-100/0" />
+          <img src={heroImageUrl} alt="Manager reviewing smart inventory analytics dashboard" className="h-full w-full object-cover" />
+        </div>
+
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-16 pt-16 sm:px-8 lg:flex-row lg:items-center lg:pb-32 lg:pt-24">
+          <div className="w-full max-w-2xl space-y-8">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-midnight shadow-sm">
+              Smart inventory, seamless control
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight text-midnight sm:text-4xl md:text-5xl lg:text-6xl">
+              Track. Manage. Optimize. <br />
+              <span className="text-sunshine">SmartShelfX</span> keeps every store stocked.
+            </h1>
+            <p className="text-lg leading-relaxed text-slate-600">
+              SmartShelfX gives growing retail teams one place to forecast demand, automate restocking, and monitor every
+              warehouse in real time. Replace chaotic spreadsheets with a living source of truth your managers actually
+              trust.
+            </p>
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              <Link
+                to="/login"
+                className="flex w-full items-center justify-center rounded-full bg-midnight px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-midnight/20 transition hover:bg-midnight/90 sm:w-auto sm:px-8"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="flex w-full items-center justify-center rounded-full border border-midnight px-6 py-3 text-sm font-semibold text-midnight transition hover:bg-midnight hover:text-white sm:w-auto sm:px-8"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            <ul className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+              <li className="flex items-start gap-3 rounded-lg bg-white/80 p-4 shadow-sm">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sunshine" />
+                <span>Unified analytics across warehouses with actionable dashboards.</span>
+              </li>
+              <li className="flex items-start gap-3 rounded-lg bg-white/80 p-4 shadow-sm">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sunshine" />
+                <span>Predictive restock alerts so you never miss a replenishment window.</span>
+              </li>
+              <li className="flex items-start gap-3 rounded-lg bg-white/80 p-4 shadow-sm">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sunshine" />
+                <span>Role-based dashboards for admins, managers, and buyers.</span>
+              </li>
+              <li className="flex items-start gap-3 rounded-lg bg-white/80 p-4 shadow-sm">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sunshine" />
+                <span>Secure exports, purchase history, and audit-ready insights.</span>
+              </li>
+            </ul>
+          </div>
+          <div className="relative flex w-full max-w-lg items-center justify-center lg:hidden">
+            <div className="absolute inset-0 rounded-3xl bg-sky-100/70 blur-3xl" />
+            <img
+              src={heroImageUrl}
+              alt="SmartShelfX analytics overview"
+              className="relative w-full max-w-md rounded-3xl border border-white/70 shadow-xl"
+            />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

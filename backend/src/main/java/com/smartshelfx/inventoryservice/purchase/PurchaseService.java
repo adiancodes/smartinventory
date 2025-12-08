@@ -113,6 +113,27 @@ public class PurchaseService {
         return new SalesSummaryResponse(totalOrders, totalItems, revenue);
     }
 
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public WarehousePurchaseHistoryResponse managerPurchaseHistory(SecurityUserDetails currentUser) {
+        Long warehouseId = currentUser.warehouseId();
+        if (warehouseId == null) {
+            throw new IllegalArgumentException("Manager is not assigned to a warehouse");
+        }
+
+        List<PurchaseEntity> purchases = purchaseRepository.findTop50ByWarehouse_IdOrderByPurchasedAtDesc(warehouseId);
+        long totalOrders = purchaseRepository.countByWarehouse_Id(warehouseId);
+        Long totalItemsResult = purchaseRepository.sumTotalQuantityByWarehouse(warehouseId);
+        BigDecimal totalRevenue = purchaseRepository.sumTotalRevenueByWarehouse(warehouseId);
+        long totalItems = totalItemsResult != null ? totalItemsResult : 0L;
+        BigDecimal revenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
+
+        List<WarehousePurchaseItemResponse> items = purchases.stream()
+                .map(PurchaseService::toWarehouseItemResponse)
+                .toList();
+
+        return new WarehousePurchaseHistoryResponse(items, totalOrders, totalItems, revenue);
+    }
+
     private static PurchaseResponse toResponse(PurchaseEntity entity) {
         return new PurchaseResponse(
                 entity.getId(),
@@ -140,6 +161,21 @@ public class PurchaseService {
                 entity.getPurchasedAt(),
                 entity.getWarehouseName(),
                 entity.getWarehouseCode()
+        );
+    }
+
+    private static WarehousePurchaseItemResponse toWarehouseItemResponse(PurchaseEntity entity) {
+        return new WarehousePurchaseItemResponse(
+                entity.getId(),
+                entity.getProduct().getId(),
+                entity.getProductName(),
+                entity.getProductSku(),
+                entity.getQuantity(),
+                entity.getUnitPrice(),
+                entity.getTotalPrice(),
+                entity.getPurchasedAt(),
+                entity.getUser().getFullName(),
+                entity.getUser().getOfficialEmail()
         );
     }
 }

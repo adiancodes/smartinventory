@@ -15,6 +15,10 @@ export async function fetchManagerSalesSummary() {
     const response = await api.get("/purchases/summary/manager");
     return response.data;
 }
+export async function fetchManagerPurchaseHistory() {
+    const response = await api.get("/purchases/manager/history");
+    return response.data;
+}
 export async function fetchAdminSalesByWarehouse() {
     const response = await api.get("/purchases/summary/admin/by-warehouse");
     return response.data;

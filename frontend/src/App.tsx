@@ -14,12 +14,13 @@ import UserDashboard from "./pages/dashboard/UserDashboard";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import UnauthorizedPage from "./pages/Unauthorized";
+import LandingPage from "./pages/landing/LandingPage";
 
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
   <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -43,7 +44,7 @@ export default function App() {
           <Route path="/user/dashboard" element={<UserDashboard />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   );

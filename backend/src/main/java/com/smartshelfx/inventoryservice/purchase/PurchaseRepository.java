@@ -15,6 +15,8 @@ public interface PurchaseRepository extends JpaRepository<PurchaseEntity, Long> 
 
     List<PurchaseEntity> findAllByUser_IdOrderByPurchasedAtDesc(Long userId);
 
+    List<PurchaseEntity> findTop50ByWarehouse_IdOrderByPurchasedAtDesc(Long warehouseId);
+
     long countByWarehouse_Id(Long warehouseId);
 
     @Query("select coalesce(sum(p.totalPrice), 0) from PurchaseEntity p")
