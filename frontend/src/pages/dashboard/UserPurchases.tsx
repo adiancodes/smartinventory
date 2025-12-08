@@ -58,7 +58,7 @@ export default function UserPurchases() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <TopNavbar className="py-4" navLinks={userNavLinks} showAuthCTA={false} />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      <main className="flex w-full flex-1 flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">
             Welcome back{user?.fullName ? ", " : ""}

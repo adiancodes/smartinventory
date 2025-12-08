@@ -86,7 +86,7 @@ export default function RegisterPage() {
         secondaryAction={{ label: "Home", to: "/" }}
         className="py-4"
       />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+      <main className="flex w-full flex-1 items-center justify-center px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         <div className="grid w-full gap-10 rounded-3xl border border-white/40 bg-white/70 p-8 shadow-2xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40 md:grid-cols-2 md:p-12">
           <section className="space-y-6">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-midnight shadow-sm dark:bg-slate-800/80 dark:text-slate-100">

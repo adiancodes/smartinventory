@@ -12,7 +12,7 @@ export default function AdminWarehouses() {
   return (
     <div className="min-h-screen bg-ash">
       <AdminTopNav />
-      <main className="mx-auto max-w-7xl px-10 py-8">
+      <main className="w-full px-10 py-8">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-800">Warehouses</h1>
           <p className="mt-2 text-sm text-slate-500">All active warehouses with their codes and locations.</p>

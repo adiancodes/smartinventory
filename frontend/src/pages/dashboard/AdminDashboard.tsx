@@ -100,7 +100,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-ash">
       <AdminTopNav />
-      <main className="mx-auto max-w-7xl px-10 py-8">
+      <main className="w-full px-10 py-8">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-800">Admin Dashboard</h1>

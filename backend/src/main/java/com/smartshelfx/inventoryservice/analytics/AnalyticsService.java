@@ -466,7 +466,7 @@ public class AnalyticsService {
             contentStream.beginText();
             contentStream.setFont(bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA, fontSize);
             contentStream.newLineAtOffset(LEFT_MARGIN, cursorY);
-            contentStream.showText(text != null ? text : "");
+            contentStream.showText(sanitize(text));
             contentStream.endText();
             cursorY -= LINE_STEP;
         }
@@ -474,6 +474,14 @@ public class AnalyticsService {
         void blankLine() throws IOException {
             cursorY -= LINE_STEP;
             ensureSpace();
+        }
+
+        private String sanitize(String text) {
+            if (text == null || text.isBlank()) {
+                return "";
+            }
+            // Helvetica (WinAnsi) cannot render the rupee symbol, so swap it for an ASCII-friendly token.
+            return text.replace("\u20B9", "INR ");
         }
 
         private void ensureSpace() throws IOException {

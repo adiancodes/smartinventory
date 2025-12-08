@@ -53,7 +53,7 @@ export default function TopNavbar({
 
   return (
     <header className={`sticky top-0 z-40 flex w-full justify-center backdrop-blur-md ${className}`}>
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 rounded-full border border-white/40 bg-white/40 px-4 py-3 text-sm shadow-lg shadow-white/20 transition dark:border-slate-700/60 dark:bg-slate-900/60 dark:shadow-slate-900/30 sm:flex-nowrap sm:gap-6 sm:px-6">
+      <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-full border border-white/40 bg-white/40 px-4 py-3 text-sm shadow-lg shadow-white/20 transition dark:border-slate-700/60 dark:bg-slate-900/60 dark:shadow-slate-900/30 sm:flex-nowrap sm:gap-6 sm:px-6">
         <div className="flex items-center gap-4 sm:gap-6">
           <Link to="/" className="text-lg font-semibold text-midnight transition hover:text-midnight/80 dark:text-slate-100">
             SmartShelfX

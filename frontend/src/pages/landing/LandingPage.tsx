@@ -19,7 +19,7 @@ export default function LandingPage() {
           <img src={heroImageUrl} alt="Manager reviewing smart inventory analytics dashboard" className="h-full w-full object-cover" />
         </div>
 
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 pb-16 pt-16 sm:px-8 lg:flex-row lg:items-center lg:pb-32 lg:pt-24">
+        <div className="flex w-full flex-col gap-12 px-6 pb-16 pt-16 sm:px-8 lg:flex-row lg:items-center lg:pb-32 lg:pt-24">
           <div className="w-full max-w-2xl space-y-8">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-midnight shadow-sm">
               Smart inventory, seamless control
