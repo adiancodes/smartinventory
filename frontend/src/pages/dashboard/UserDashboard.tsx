@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FieldErrors, UseFormRegister, useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { fetchUserPurchaseHistory, purchaseProduct } from "../../api/purchases";
 import { Product, StockStatus } from "../../types/product";
 import { UserAddressesResponse } from "../../types/address";
 import { PurchaseHistoryResponse } from "../../types/purchase";
+import TopNavbar from "../../components/layout/TopNavbar";
 
 const stockStatusOptions: Array<"ALL" | StockStatus> = ["ALL", "IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"];
 
@@ -240,120 +241,113 @@ export default function UserDashboard() {
 
   const addressSectionBusy = addressMutation.isPending || isSubmitting;
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate("/login");
-  };
+  }, [logout, navigate]);
+
+  const userNavLinks = useMemo(
+    () => [
+      { label: "Home", onClick: () => setActiveSection("HOME"), isActive: activeSection === "HOME" },
+      { label: "Dashboard", onClick: () => setActiveSection("DASHBOARD"), isActive: activeSection === "DASHBOARD" },
+      { label: "Addresses", onClick: () => setActiveSection("ADDRESS"), isActive: activeSection === "ADDRESS" },
+      { label: "Logout", onClick: handleLogout, variant: "danger" as const }
+    ],
+    [activeSection, handleLogout, setActiveSection]
+  );
 
   return (
-    <div className="flex min-h-screen bg-ash lg:h-screen">
-      <aside className="flex w-72 flex-col bg-white shadow-xl lg:sticky lg:top-0 lg:h-screen lg:max-h-screen lg:overflow-y-auto">
-        <div className="border-b px-6 py-6">
-          <p className="text-xs font-semibold uppercase text-slate-400">Welcome</p>
-          <p className="mt-1 text-lg font-semibold text-slate-800">{user?.fullName ?? "User"}</p>
-          <p className="text-sm text-slate-500">{user?.email}</p>
-        </div>
-        <nav className="flex-1 px-4 py-6">
-          {[{ key: "HOME", label: "Home" }, { key: "DASHBOARD", label: "Dashboard" }, { key: "ADDRESS", label: "Addresses" }].map((item) => {
-            const isActive = activeSection === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                className={`mb-2 w-full rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${
-                  isActive ? "bg-midnight text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-                onClick={() => setActiveSection(item.key as UserSection)}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-        <div className="border-t px-4 py-6">
-          <button
-            type="button"
-            className="w-full rounded-lg border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <TopNavbar className="py-4" showAuthCTA={false} navLinks={userNavLinks} />
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+          <div className="flex flex-col gap-2">
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Welcome back</p>
+              <h1 className="mt-2 text-2xl font-semibold text-midnight dark:text-white">{user?.fullName ?? "User"}</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{user?.email}</p>
+            </div>
+          </div>
+        </section>
 
-  <main className="flex-1 px-8 py-10 lg:h-screen lg:overflow-y-auto">
         {activeSection === "HOME" && (
           <div className="space-y-8">
-            <header>
-              <h1 className="text-2xl font-semibold text-slate-800">Account Overview</h1>
-              <p className="mt-2 text-sm text-slate-500">Review your profile details and purchase history at a glance.</p>
+            <header className="space-y-2">
+              <h2 className="text-3xl font-semibold text-midnight dark:text-white">Account Overview</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Review your profile details and purchase history at a glance.
+              </p>
             </header>
 
-            <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <p className="text-xs font-semibold uppercase text-slate-500">Profile</p>
-                <dl className="mt-4 space-y-3 text-sm text-slate-600">
-                  <div>
-                    <dt className="text-xs uppercase text-slate-400">Full Name</dt>
-                    <dd className="text-base font-semibold text-slate-800">{user?.fullName ?? "--"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs uppercase text-slate-400">Email</dt>
-                    <dd>{user?.email ?? "--"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs uppercase text-slate-400">Contact</dt>
-                    <dd>{user?.contactNumber ?? "Not provided"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs uppercase text-slate-400">Company</dt>
-                    <dd>{user?.companyName ?? "Not provided"}</dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <p className="text-xs font-semibold uppercase text-slate-500">Shipping Address</p>
-                {addressesQuery.isLoading ? (
-                  <p className="mt-4 text-sm text-slate-500">Loading address...</p>
-                ) : (
-                  <div className="mt-4 text-sm text-slate-600">
-                    {addressesQuery.data?.delivery ? (
-                      <address className="not-italic">
-                        <p className="font-semibold text-slate-800">Delivery</p>
-                        <p>{addressesQuery.data.delivery.line1}</p>
-                        {addressesQuery.data.delivery.line2 && <p>{addressesQuery.data.delivery.line2}</p>}
-                        <p>{`${addressesQuery.data.delivery.city}, ${addressesQuery.data.delivery.state}`}</p>
-                        <p>{`${addressesQuery.data.delivery.postalCode}, ${addressesQuery.data.delivery.country}`}</p>
-                      </address>
-                    ) : (
-                      <p className="text-sm text-slate-500">No delivery address saved yet.</p>
-                    )}
-                    <div className="mt-6">
-                      <p className="font-semibold text-slate-800">Billing</p>
-                      {addressesQuery.data?.billing ? (
-                        <address className="mt-2 not-italic">
-                          <p>{addressesQuery.data.billing.line1}</p>
-                          {addressesQuery.data.billing.line2 && <p>{addressesQuery.data.billing.line2}</p>}
-                          <p>{`${addressesQuery.data.billing.city}, ${addressesQuery.data.billing.state}`}</p>
-                          <p>{`${addressesQuery.data.billing.postalCode}, ${addressesQuery.data.billing.country}`}</p>
-                        </address>
-                      ) : (
-                        <p className="text-sm text-slate-500">No billing address saved yet.</p>
-                      )}
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Profile</p>
+                  <dl className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                    <div>
+                      <dt className="text-xs uppercase text-slate-400 dark:text-slate-500">Full Name</dt>
+                      <dd className="text-base font-semibold text-midnight dark:text-white">{user?.fullName ?? "--"}</dd>
                     </div>
-                  </div>
-                )}
+                    <div>
+                      <dt className="text-xs uppercase text-slate-400 dark:text-slate-500">Email</dt>
+                      <dd>{user?.email ?? "--"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase text-slate-400 dark:text-slate-500">Contact</dt>
+                      <dd>{user?.contactNumber ?? "Not provided"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase text-slate-400 dark:text-slate-500">Company</dt>
+                      <dd>{user?.companyName ?? "Not provided"}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Shipping Address</p>
+                  {addressesQuery.isLoading ? (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading address...</p>
+                  ) : (
+                    <div className="mt-4 space-y-6 text-sm text-slate-600 dark:text-slate-300">
+                      <div>
+                        <p className="font-semibold text-midnight dark:text-white">Delivery</p>
+                        {addressesQuery.data?.delivery ? (
+                          <address className="mt-1 space-y-1 not-italic">
+                            <p>{addressesQuery.data.delivery.line1}</p>
+                            {addressesQuery.data.delivery.line2 && <p>{addressesQuery.data.delivery.line2}</p>}
+                            <p>{`${addressesQuery.data.delivery.city}, ${addressesQuery.data.delivery.state}`}</p>
+                            <p>{`${addressesQuery.data.delivery.postalCode}, ${addressesQuery.data.delivery.country}`}</p>
+                          </address>
+                        ) : (
+                          <p className="text-sm text-slate-500 dark:text-slate-400">No delivery address saved yet.</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-midnight dark:text-white">Billing</p>
+                        {addressesQuery.data?.billing ? (
+                          <address className="mt-1 space-y-1 not-italic">
+                            <p>{addressesQuery.data.billing.line1}</p>
+                            {addressesQuery.data.billing.line2 && <p>{addressesQuery.data.billing.line2}</p>}
+                            <p>{`${addressesQuery.data.billing.city}, ${addressesQuery.data.billing.state}`}</p>
+                            <p>{`${addressesQuery.data.billing.postalCode}, ${addressesQuery.data.billing.country}`}</p>
+                          </address>
+                        ) : (
+                          <p className="text-sm text-slate-500 dark:text-slate-400">No billing address saved yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">Purchase History</h2>
-                  <p className="text-sm text-slate-500">Track every item you've ordered.</p>
+                  <h3 className="text-lg font-semibold text-midnight dark:text-white">Purchase History</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Track every item you've ordered.</p>
                 </div>
-                <div className="rounded-lg bg-midnight px-4 py-2 text-sm font-semibold text-white">
+                <div className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-amber-400 dark:text-slate-900">
                   Total Spend: {currencyFormatter.format(totalSpend ?? 0)}
                 </div>
               </div>
@@ -363,10 +357,10 @@ export default function UserDashboard() {
                 <p className="mt-6 text-sm text-slate-500">No purchases yet. Explore the catalog to place your first order.</p>
               )}
               {purchaseHistory.length > 0 && (
-                <div className="mt-6 overflow-x-auto">
+                <div className="mt-6 overflow-x-auto rounded-2xl border border-white/30 bg-white/90 shadow-inner dark:border-slate-700/50 dark:bg-slate-900/70">
                   <table className="w-full table-auto text-left text-sm">
                     <thead>
-                      <tr className="border-b bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                      <tr className="border-b border-white/40 bg-white/70 text-xs uppercase tracking-widest text-slate-500 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-300">
                         <th className="px-4 py-2">Product</th>
                         <th className="px-4 py-2">SKU</th>
                         <th className="px-4 py-2">Quantity</th>
@@ -376,12 +370,12 @@ export default function UserDashboard() {
                     </thead>
                     <tbody>
                       {purchaseHistory.map((purchase) => (
-                        <tr key={purchase.id} className="border-b last:border-none">
-                          <td className="px-4 py-3 font-medium text-slate-800">{purchase.productName}</td>
-                          <td className="px-4 py-3 text-slate-600">{purchase.productSku}</td>
-                          <td className="px-4 py-3 text-slate-600">{purchase.quantity}</td>
-                          <td className="px-4 py-3 text-slate-600">{currencyFormatter.format(purchase.totalPrice)}</td>
-                          <td className="px-4 py-3 text-slate-500">{new Date(purchase.purchasedAt).toLocaleString()}</td>
+                        <tr key={purchase.id} className="border-b border-white/20 last:border-none dark:border-slate-800/40">
+                          <td className="px-4 py-3 font-medium text-midnight dark:text-slate-100">{purchase.productName}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{purchase.productSku}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{purchase.quantity}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{currencyFormatter.format(purchase.totalPrice)}</td>
+                          <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{new Date(purchase.purchasedAt).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -394,21 +388,23 @@ export default function UserDashboard() {
 
         {activeSection === "DASHBOARD" && (
           <div className="space-y-8">
-            <header>
-              <h1 className="text-2xl font-semibold text-slate-800">Browse Products</h1>
-              <p className="mt-2 text-sm text-slate-500">Search across every warehouse, filter items, and place quick orders.</p>
+            <header className="space-y-2">
+              <h2 className="text-3xl font-semibold text-midnight dark:text-white">Browse Products</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Search across every warehouse, filter items, and place quick orders.
+              </p>
             </header>
 
             {purchaseSuccess && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <div className="rounded-2xl border border-emerald-300/60 bg-emerald-100/60 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/20 dark:text-emerald-200">
                 {purchaseSuccess}
               </div>
             )}
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex w-full flex-col gap-1 lg:max-w-md">
-                  <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="catalog-search">
+                  <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor="catalog-search">
                     Search
                   </label>
                   <input
@@ -421,7 +417,7 @@ export default function UserDashboard() {
                 </div>
                 <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 lg:max-w-xl">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="category-filter">
+                    <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor="category-filter">
                       Category
                     </label>
                     <input
@@ -433,7 +429,7 @@ export default function UserDashboard() {
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="vendor-filter">
+                    <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor="vendor-filter">
                       Vendor
                     </label>
                     <input
@@ -445,7 +441,7 @@ export default function UserDashboard() {
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="stock-filter">
+                    <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor="stock-filter">
                       Stock
                     </label>
                     <select
@@ -466,7 +462,7 @@ export default function UserDashboard() {
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  className="text-sm font-semibold text-slate-500 hover:text-slate-800"
+                  className="rounded-full border border-white/50 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-midnight dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                   onClick={() => setFilters({ category: "", vendor: "", stockStatus: "ALL" })}
                 >
                   Reset filters
@@ -474,36 +470,36 @@ export default function UserDashboard() {
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
-              {productsQuery.isLoading && <p className="text-sm text-slate-500">Loading catalog...</p>}
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+              {productsQuery.isLoading && <p className="text-sm text-slate-500 dark:text-slate-400">Loading catalog...</p>}
               {productsQuery.isError && (
                 <p className="text-sm text-red-500">Unable to load products right now. Please try again later.</p>
               )}
               {!productsQuery.isLoading && filteredProducts.length === 0 && (
-                <p className="text-sm text-slate-500">No products match your search filters.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No products match your search filters.</p>
               )}
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredProducts.map((product) => (
                   <button
                     key={product.id}
                     type="button"
-                    className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                    className="rounded-2xl border border-white/40 bg-white/75 p-5 text-left shadow-lg shadow-sky-200/20 transition hover:-translate-y-1 hover:shadow-2xl dark:border-slate-700/60 dark:bg-slate-900/70 dark:hover:bg-slate-900/80"
                     onClick={() => {
                       setSelectedProduct(product);
                       setPurchaseSuccess(null);
                     }}
                   >
-                    <p className="text-xs font-semibold uppercase text-slate-400">{product.category}</p>
-                    <h3 className="mt-2 text-lg font-semibold text-slate-800">{product.name}</h3>
-                    <p className="text-sm text-slate-500">SKU: {product.sku}</p>
-                    <p className="mt-3 text-base font-semibold text-midnight">
+                    <p className="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">{product.category}</p>
+                    <h3 className="mt-2 text-lg font-semibold text-midnight dark:text-white">{product.name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-300">SKU: {product.sku}</p>
+                    <p className="mt-3 text-base font-semibold text-midnight dark:text-amber-300">
                       {currencyFormatter.format(product.price ?? 0)}
                     </p>
-                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-300">
                       <span>Stock: {product.currentStock}</span>
                       <span>
                         {product.warehouseName}
-                        <span className="ml-1 text-slate-400">{product.warehouseCode}</span>
+                        <span className="ml-1 text-slate-400 dark:text-slate-500">{product.warehouseCode}</span>
                       </span>
                     </div>
                   </button>
@@ -511,21 +507,24 @@ export default function UserDashboard() {
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800">New Arrivals</h2>
-                <span className="text-xs uppercase text-slate-400">Latest additions</span>
+                <h3 className="text-lg font-semibold text-midnight dark:text-white">New Arrivals</h3>
+                <span className="text-xs uppercase text-slate-400 dark:text-slate-500">Latest additions</span>
               </div>
               {newArrivals.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-500">No recent products yet.</p>
+                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No recent products yet.</p>
               ) : (
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {newArrivals.map((product) => (
-                    <div key={product.id} className="rounded-xl border border-slate-200 p-4">
-                      <p className="text-xs uppercase text-slate-400">{product.category}</p>
-                      <p className="mt-1 text-base font-semibold text-slate-800">{product.name}</p>
-                      <p className="mt-2 text-sm text-slate-500">From {product.vendor}</p>
-                      <p className="mt-3 text-sm font-semibold text-midnight">
+                    <div
+                      key={product.id}
+                      className="rounded-2xl border border-white/40 bg-white/75 p-4 shadow-lg shadow-sky-200/20 dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30"
+                    >
+                      <p className="text-xs uppercase text-slate-400 dark:text-slate-500">{product.category}</p>
+                      <p className="mt-1 text-base font-semibold text-midnight dark:text-white">{product.name}</p>
+                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">From {product.vendor}</p>
+                      <p className="mt-3 text-sm font-semibold text-midnight dark:text-amber-300">
                         {currencyFormatter.format(product.price ?? 0)}
                       </p>
                     </div>
@@ -538,25 +537,27 @@ export default function UserDashboard() {
 
         {activeSection === "ADDRESS" && (
           <div className="space-y-8">
-            <header>
-              <h1 className="text-2xl font-semibold text-slate-800">Manage Addresses</h1>
-              <p className="mt-2 text-sm text-slate-500">Update your delivery and billing information used during checkout.</p>
+            <header className="space-y-2">
+              <h2 className="text-3xl font-semibold text-midnight dark:text-white">Manage Addresses</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Update your delivery and billing information used during checkout.
+              </p>
             </header>
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
               {addressFeedback && (
-                <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <div className="mb-4 rounded-2xl border border-emerald-300/60 bg-emerald-100/60 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/20 dark:text-emerald-200">
                   {addressFeedback}
                 </div>
               )}
               {addressErrorMessage && (
-                <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                <div className="mb-4 rounded-2xl border border-red-300/70 bg-red-100/70 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-400/60 dark:bg-red-500/20 dark:text-red-200">
                   {addressErrorMessage}
                 </div>
               )}
               <form className="grid grid-cols-1 gap-6 lg:grid-cols-2" onSubmit={handleSubmit(onSubmitAddresses)}>
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-slate-800">Delivery Address</h2>
+                  <h3 className="text-lg font-semibold text-midnight dark:text-white">Delivery Address</h3>
                   <AddressFields
                     prefix="delivery"
                     register={register}
@@ -564,7 +565,7 @@ export default function UserDashboard() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-slate-800">Billing Address</h2>
+                  <h3 className="text-lg font-semibold text-midnight dark:text-white">Billing Address</h3>
                   <AddressFields
                     prefix="billing"
                     register={register}
@@ -574,7 +575,7 @@ export default function UserDashboard() {
                 <div className="col-span-full flex justify-end gap-3">
                   <button
                     type="button"
-                    className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
+                    className="rounded-full border border-white/60 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-midnight dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                     onClick={() => addressesQuery.refetch()}
                   >
                     Reset
@@ -582,7 +583,7 @@ export default function UserDashboard() {
                   <button
                     type="submit"
                     disabled={addressSectionBusy}
-                    className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
                   >
                     {addressSectionBusy ? "Saving..." : "Save Addresses"}
                   </button>
@@ -594,32 +595,32 @@ export default function UserDashboard() {
       </main>
 
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl border border-white/30 bg-white/95 p-8 shadow-2xl transition dark:border-slate-700/60 dark:bg-slate-900/90">
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">{selectedProduct.name}</h3>
-                <p className="text-sm text-slate-500">{selectedProduct.category} · SKU {selectedProduct.sku}</p>
+                <h3 className="text-lg font-semibold text-midnight dark:text-white">{selectedProduct.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-300">{selectedProduct.category} · SKU {selectedProduct.sku}</p>
               </div>
               <button
                 type="button"
-                className="text-sm font-semibold text-slate-500 hover:text-slate-800"
+                className="rounded-full border border-transparent px-3 py-1 text-sm text-slate-500 transition hover:border-slate-200 hover:text-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
                 onClick={closeProductModal}
               >
                 Close
               </button>
             </div>
-            <div className="space-y-4">
-              <p className="text-sm text-slate-600">Vendor: {selectedProduct.vendor}</p>
-              <p className="text-sm text-slate-600">
+            <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
+              <p>Vendor: {selectedProduct.vendor}</p>
+              <p>
                 Warehouse: {selectedProduct.warehouseName}
-                <span className="ml-2 text-xs uppercase text-slate-400">{selectedProduct.warehouseCode}</span>
+                <span className="ml-2 text-xs uppercase text-slate-400 dark:text-slate-500">{selectedProduct.warehouseCode}</span>
               </p>
-              <p className="text-lg font-semibold text-midnight">
+              <p className="text-lg font-semibold text-midnight dark:text-amber-300">
                 {currencyFormatter.format(selectedProduct.price ?? 0)}
               </p>
               <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold text-slate-700" htmlFor="purchase-quantity">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="purchase-quantity">
                   Quantity
                 </label>
                 <input
@@ -629,22 +630,22 @@ export default function UserDashboard() {
                   max={selectedProduct.currentStock}
                   value={purchaseQuantity}
                   onChange={(event) => setPurchaseQuantity(Number(event.target.value))}
-                  className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="w-24 rounded-md border border-slate-300/80 bg-white/80 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900/60"
                 />
-                <span className="text-xs text-slate-500">In stock: {selectedProduct.currentStock}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">In stock: {selectedProduct.currentStock}</span>
               </div>
               {purchaseError && <p className="text-sm text-red-500">{purchaseError}</p>}
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
+                  className="rounded-full border border-white/60 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-midnight dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                   onClick={closeProductModal}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
                   disabled={purchaseMutation.isPending}
                   onClick={onPurchase}
                 >
@@ -671,14 +672,14 @@ function AddressFields({ prefix, register, errors }: AddressFieldProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.line1`}>
+        <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.line1`}>
           Address Line 1
         </label>
         <input id={`${prefix}.line1`} className="input" {...register(makeField("line1"))} />
         {errors?.line1 && <span className="text-xs text-red-500">{errors.line1.message}</span>}
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.line2`}>
+        <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.line2`}>
           Address Line 2
         </label>
         <input id={`${prefix}.line2`} className="input" {...register(makeField("line2"))} />
@@ -686,14 +687,14 @@ function AddressFields({ prefix, register, errors }: AddressFieldProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.city`}>
+          <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.city`}>
             City
           </label>
           <input id={`${prefix}.city`} className="input" {...register(makeField("city"))} />
           {errors?.city && <span className="text-xs text-red-500">{errors.city.message}</span>}
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.state`}>
+          <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.state`}>
             State
           </label>
           <input id={`${prefix}.state`} className="input" {...register(makeField("state"))} />
@@ -702,14 +703,14 @@ function AddressFields({ prefix, register, errors }: AddressFieldProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.postalCode`}>
+          <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.postalCode`}>
             Postal Code
           </label>
           <input id={`${prefix}.postalCode`} className="input" {...register(makeField("postalCode"))} />
           {errors?.postalCode && <span className="text-xs text-red-500">{errors.postalCode.message}</span>}
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold uppercase text-slate-500" htmlFor={`${prefix}.country`}>
+          <label className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300" htmlFor={`${prefix}.country`}>
             Country
           </label>
           <input id={`${prefix}.country`} className="input" {...register(makeField("country"))} />

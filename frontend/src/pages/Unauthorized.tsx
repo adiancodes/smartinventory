@@ -1,9 +1,38 @@
+import TopNavbar from "../components/layout/TopNavbar";
+
 export default function UnauthorizedPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ash">
-      <div className="rounded-xl bg-white p-10 shadow-md">
-        <h1 className="text-2xl font-semibold text-slate-800">Access Denied</h1>
-        <p className="mt-4 text-slate-500">You do not have permission to view this page.</p>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <TopNavbar
+        primaryAction={{ label: "Login", to: "/login" }}
+        secondaryAction={{ label: "Home", to: "/" }}
+        className="py-4"
+      />
+      <div className="flex min-h-[calc(100vh-120px)] items-center justify-center px-4">
+        <div className="w-full max-w-lg rounded-3xl border border-white/40 bg-white/80 p-10 text-center shadow-xl shadow-sky-200/30 backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-900/80 dark:shadow-slate-900/40">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-red-500 dark:bg-slate-800/70 dark:text-red-300">
+            Access restricted
+          </span>
+          <h1 className="mt-6 text-3xl font-semibold text-midnight dark:text-white">Access denied</h1>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            You do not have permission to view this page. Return to the dashboard or contact your SmartShelfX
+            administrator if you believe this is a mistake.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm font-semibold">
+            <a
+              href="/"
+              className="rounded-full bg-midnight px-6 py-3 text-white shadow-sm transition hover:bg-midnight/90 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+            >
+              Back to Home
+            </a>
+            <a
+              href="/login"
+              className="rounded-full border border-midnight px-6 py-3 text-midnight transition hover:bg-midnight hover:text-white dark:border-slate-500 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Login
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

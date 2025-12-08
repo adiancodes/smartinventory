@@ -1,7 +1,8 @@
-import { BuyProductPayload, PurchaseHistoryResponse, PurchaseResponse, SalesSummaryResponse, WarehouseProductSales, WarehouseSalesSummary } from "../types/purchase";
+import { BuyProductPayload, PurchaseHistoryResponse, PurchaseResponse, SalesSummaryResponse, WarehousePurchaseHistoryResponse, WarehouseProductSales, WarehouseSalesSummary } from "../types/purchase";
 export declare function purchaseProduct(payload: BuyProductPayload): Promise<PurchaseResponse>;
 export declare function fetchUserPurchaseHistory(): Promise<PurchaseHistoryResponse>;
 export declare function fetchAdminSalesSummary(): Promise<SalesSummaryResponse>;
 export declare function fetchManagerSalesSummary(): Promise<SalesSummaryResponse>;
+export declare function fetchManagerPurchaseHistory(): Promise<WarehousePurchaseHistoryResponse>;
 export declare function fetchAdminSalesByWarehouse(): Promise<WarehouseSalesSummary[]>;
 export declare function fetchAdminProductSalesForWarehouse(warehouseId: number): Promise<WarehouseProductSales[]>;

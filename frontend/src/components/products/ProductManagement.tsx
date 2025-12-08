@@ -267,7 +267,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
         {mode === "ADMIN" ? (
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-4">
@@ -334,7 +334,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
             <div className="flex gap-3">
               <button
                 type="button"
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
+                className="rounded-full border border-white/70 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/80 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-800"
                 onClick={() =>
                   setFilters({ category: "", vendor: "", stockStatus: "ALL", warehouseId: "ALL" })
                 }
@@ -343,7 +343,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
               </button>
               <button
                 type="button"
-                className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
                 onClick={openCreateModal}
               >
                 Add Product
@@ -366,7 +366,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
             </div>
             <button
               type="button"
-              className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
               onClick={openCreateModal}
             >
               Add New Product
@@ -375,7 +375,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
         )}
       </section>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-white/40 bg-white/85 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/75 dark:shadow-slate-900/40">
         {!hasManagerWarehouse && (
           <p className="text-sm text-red-500">Your account is not attached to a warehouse. Contact the administrator.</p>
         )}
@@ -394,11 +394,11 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
         )}
 
         {hasManagerWarehouse && displayProducts.length > 0 && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-2xl border border-white/30 bg-white/90 shadow-inner dark:border-slate-700/50 dark:bg-slate-900/70">
             {mode === "MANAGER" ? (
               <table className="w-full table-auto text-left text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                  <tr className="border-b border-white/40 bg-white/70 text-xs uppercase tracking-widest text-slate-500 dark:border-slate-700/60 dark:bg-slate-900/60">
                     <th className="px-4 py-2">Product</th>
                     <th className="px-4 py-2">SKU</th>
                     <th className="px-4 py-2">Category</th>
@@ -427,7 +427,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                         <td className="px-4 py-3 text-slate-600">{product.category}</td>
                         <td className="px-4 py-3 text-slate-600">{product.currentStock}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${statusClass}`}>
                             {statusLabel}
                           </span>
                         </td>
@@ -439,14 +439,14 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600"
+                              className="rounded-full border border-slate-300/80 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                               onClick={() => openEditModal(product)}
                             >
                               Edit
                             </button>
                             <button
                               type="button"
-                              className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600"
+                              className="rounded-full border border-red-300/80 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-400/70 dark:text-red-300 dark:hover:bg-red-500/20"
                               onClick={() => handleDelete(product.id)}
                             >
                               Delete
@@ -461,7 +461,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
             ) : (
               <table className="w-full table-auto text-left text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                  <tr className="border-b border-white/40 bg-white/70 text-xs uppercase tracking-widest text-slate-500 dark:border-slate-700/60 dark:bg-slate-900/60">
                     <th className="px-4 py-2">Product</th>
                     <th className="px-4 py-2">SKU</th>
                     <th className="px-4 py-2">Category</th>
@@ -497,7 +497,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                         <td className="px-4 py-3 text-slate-600">{currencyFormatter.format(product.price ?? 0)}</td>
                         <td className="px-4 py-3 text-slate-600">{currencyFormatter.format(product.totalValue ?? 0)}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${statusClass}`}>
                             {statusLabel}
                           </span>
                         </td>
@@ -509,14 +509,14 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600"
+                              className="rounded-full border border-slate-300/80 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                               onClick={() => openEditModal(product)}
                             >
                               Edit
                             </button>
                             <button
                               type="button"
-                              className="rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600"
+                              className="rounded-full border border-red-300/80 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-400/70 dark:text-red-300 dark:hover:bg-red-500/20"
                               onClick={() => handleDelete(product.id)}
                             >
                               Delete
@@ -534,13 +534,13 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
       </section>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/30 bg-white/95 p-8 shadow-2xl transition dark:border-slate-700/60 dark:bg-slate-900/90">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-800">{formTitle}</h2>
+              <h2 className="text-xl font-semibold text-midnight dark:text-white">{formTitle}</h2>
               <button
                 type="button"
-                className="text-sm text-slate-500 hover:text-slate-800"
+                className="rounded-full border border-transparent px-3 py-1 text-sm text-slate-500 transition hover:border-slate-200 hover:text-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
                 onClick={closeModal}
               >
                 Close
@@ -630,7 +630,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                 <input
                   id="autoRestockEnabled"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-midnight focus:ring-midnight"
+                  className="h-4 w-4 rounded border-slate-300 text-midnight focus:ring-midnight dark:border-slate-600 dark:text-amber-400 dark:focus:ring-amber-400"
                   {...register("autoRestockEnabled")}
                 />
                 <label className="text-xs font-semibold uppercase text-slate-500" htmlFor="autoRestockEnabled">
@@ -643,7 +643,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
               <div className="col-span-full mt-2 flex justify-end gap-3">
                 <button
                   type="button"
-                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600"
+                  className="rounded-full border border-slate-300/80 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800/60"
                   onClick={closeModal}
                 >
                   Cancel
@@ -651,7 +651,7 @@ export default function ProductManagement({ mode }: ProductManagementProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                  className="rounded-md bg-midnight px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save Product"}
                 </button>

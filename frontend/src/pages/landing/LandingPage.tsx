@@ -1,32 +1,17 @@
 import { Link } from "react-router-dom";
+import TopNavbar from "../../components/layout/TopNavbar";
 
 const heroImageUrl =
   "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=2000&q=80";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900">
-      <header className="sticky top-0 z-30 flex w-full justify-center backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-white/40 bg-white/40 px-6 py-4 shadow-lg shadow-white/20 transition sm:px-8">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-semibold text-midnight">SmartShelfX</span>
-          </div>
-          <nav className="flex items-center gap-3 text-sm font-medium text-slate-600 sm:gap-4">
-            <Link
-              to="/login"
-              className="rounded-full border border-midnight/60 px-4 py-2 transition hover:bg-midnight hover:text-white sm:px-5"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="rounded-full bg-sunshine px-4 py-2 font-semibold text-midnight shadow-sm transition hover:bg-sunshine/80 sm:px-5"
-            >
-              Get Started
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <TopNavbar
+        primaryAction={{ label: "Get Started", to: "/register" }}
+        secondaryAction={{ label: "Login", to: "/login" }}
+        className="py-4"
+      />
 
       <main className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 max-w-3xl lg:block">
