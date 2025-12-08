@@ -11,6 +11,7 @@ import AdminDemandForecast from "./pages/dashboard/AdminDemandForecast";
 import AdminRestock from "./pages/dashboard/AdminRestock";
 import AdminAnalytics from "./pages/dashboard/AdminAnalytics";
 import UserDashboard from "./pages/dashboard/UserDashboard";
+import UserPurchases from "./pages/dashboard/UserPurchases";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import UnauthorizedPage from "./pages/Unauthorized";
@@ -42,6 +43,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute allowedRoles={["USER"]} />}> 
           <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/user/purchases" element={<UserPurchases />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

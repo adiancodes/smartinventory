@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FieldErrors, UseFormRegister, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,11 +32,12 @@ const addressFormSchema = z.object({
 
 type AddressFormValues = z.infer<typeof addressFormSchema>;
 
-type UserSection = "HOME" | "DASHBOARD" | "ADDRESS";
+type UserSection = "HOME" | "BROWSE" | "ADDRESS";
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [activeSection, setActiveSection] = useState<UserSection>("HOME");
@@ -45,6 +46,7 @@ export default function UserDashboard() {
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
+  const [reorderStatus, setReorderStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [addressFeedback, setAddressFeedback] = useState<string | null>(null);
   const [addressErrorMessage, setAddressErrorMessage] = useState<string | null>(null);
   const [filters, setFilters] = useState<{ category: string; vendor: string; stockStatus: "ALL" | StockStatus }>(
@@ -67,6 +69,22 @@ export default function UserDashboard() {
       stockStatus: filters.stockStatus === "ALL" ? undefined : filters.stockStatus
     };
   }, [filters]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sectionParam = params.get("section");
+    let nextSection: UserSection = "HOME";
+
+    if (sectionParam === "browse") {
+      nextSection = "BROWSE";
+    } else if (sectionParam === "addresses") {
+      nextSection = "ADDRESS";
+    }
+
+    if (activeSection !== nextSection) {
+      setActiveSection(nextSection);
+    }
+  }, [location.search, activeSection]);
 
   const productsQuery = useQuery({
     queryKey: ["user", "catalog", normalizedFilters],
@@ -238,6 +256,22 @@ export default function UserDashboard() {
 
   const purchaseHistory = purchaseHistoryQuery.data?.purchases ?? [];
   const totalSpend = purchaseHistoryQuery.data?.totalSpend ?? 0;
+  const totalItemsPurchased = useMemo(
+    () => purchaseHistory.reduce((sum, purchase) => sum + purchase.quantity, 0),
+    [purchaseHistory]
+  );
+  const lastPurchase = useMemo(() => {
+    if (purchaseHistory.length === 0) {
+      return null;
+    }
+    return [...purchaseHistory].sort(
+      (first, second) => new Date(second.purchasedAt).getTime() - new Date(first.purchasedAt).getTime()
+    )[0];
+  }, [purchaseHistory]);
+  const lastPurchaseTimestamp = useMemo(
+    () => (lastPurchase ? new Date(lastPurchase.purchasedAt).toLocaleString() : null),
+    [lastPurchase]
+  );
 
   const addressSectionBusy = addressMutation.isPending || isSubmitting;
 
@@ -246,14 +280,32 @@ export default function UserDashboard() {
     navigate("/login");
   }, [logout, navigate]);
 
+  const handleReorderLast = useCallback(async () => {
+    if (!lastPurchase) {
+      return;
+    }
+    setReorderStatus(null);
+    try {
+      await purchaseMutation.mutateAsync({ productId: lastPurchase.productId, quantity: lastPurchase.quantity });
+      setReorderStatus({ type: "success", message: `Reordered ${lastPurchase.productName}.` });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setReorderStatus({
+        type: "error",
+        message: axiosError.response?.data?.message ?? "Unable to reorder right now"
+      });
+    }
+  }, [lastPurchase, purchaseMutation]);
+
   const userNavLinks = useMemo(
     () => [
-      { label: "Home", onClick: () => setActiveSection("HOME"), isActive: activeSection === "HOME" },
-      { label: "Dashboard", onClick: () => setActiveSection("DASHBOARD"), isActive: activeSection === "DASHBOARD" },
-      { label: "Addresses", onClick: () => setActiveSection("ADDRESS"), isActive: activeSection === "ADDRESS" },
+      { label: "Home", to: "/user/dashboard", isActive: activeSection === "HOME" },
+      { label: "Browse Products", to: "/user/dashboard?section=browse", isActive: activeSection === "BROWSE" },
+      { label: "Addresses", to: "/user/dashboard?section=addresses", isActive: activeSection === "ADDRESS" },
+      { label: "My Purchases", to: "/user/purchases" },
       { label: "Logout", onClick: handleLogout, variant: "danger" as const }
     ],
-    [activeSection, handleLogout, setActiveSection]
+    [activeSection, handleLogout]
   );
 
   return (
@@ -278,6 +330,76 @@ export default function UserDashboard() {
                 Review your profile details and purchase history at a glance.
               </p>
             </header>
+
+            {reorderStatus && (
+              <div
+                className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                  reorderStatus.type === "success"
+                    ? "border-emerald-300/60 bg-emerald-100/60 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/20 dark:text-emerald-200"
+                    : "border-red-300/70 bg-red-100/70 text-red-600 dark:border-red-400/60 dark:bg-red-500/20 dark:text-red-200"
+                }`}
+              >
+                {reorderStatus.message}
+              </div>
+            )}
+
+            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Total Money Spent</p>
+                  <p className="mt-4 text-3xl font-semibold text-midnight dark:text-white">
+                    {purchaseHistoryQuery.isLoading ? "..." : currencyFormatter.format(totalSpend ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Total Items Bought</p>
+                  <p className="mt-4 text-3xl font-semibold text-midnight dark:text-white">
+                    {purchaseHistoryQuery.isLoading ? "..." : totalItemsPurchased.toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Last Item Bought</p>
+                  {purchaseHistoryQuery.isLoading ? (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading recent purchase...</p>
+                  ) : lastPurchase ? (
+                    <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                      <div>
+                        <p className="text-base font-semibold text-midnight dark:text-white">{lastPurchase.productName}</p>
+                        <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Qty {lastPurchase.quantity}</p>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{lastPurchaseTimestamp}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No purchases recorded yet.</p>
+                  )}
+                </div>
+                <div className="rounded-2xl border border-white/40 bg-white/75 p-6 shadow-lg shadow-sky-200/20 transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/30">
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">Reorder Last Item</p>
+                  {purchaseHistoryQuery.isLoading ? (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading recent purchase...</p>
+                  ) : lastPurchase ? (
+                    <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                      <div>
+                        <p className="text-base font-semibold text-midnight dark:text-white">{lastPurchase.productName}</p>
+                        <p className="mt-1 text-xs uppercase text-slate-400 dark:text-slate-500">
+                          Qty {lastPurchase.quantity} · {currencyFormatter.format(lastPurchase.totalPrice)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-midnight/90 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-300"
+                        onClick={handleReorderLast}
+                        disabled={purchaseMutation.isPending}
+                      >
+                        {purchaseMutation.isPending ? "Processing..." : "Order Again"}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Place an order to enable quick reorders.</p>
+                  )}
+                </div>
+              </div>
+            </section>
 
             <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -340,53 +462,10 @@ export default function UserDashboard() {
                 </div>
               </div>
             </section>
-
-            <section className="rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl shadow-sky-200/30 backdrop-blur-sm transition dark:border-slate-700/60 dark:bg-slate-900/70 dark:shadow-slate-900/40">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-midnight dark:text-white">Purchase History</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">Track every item you've ordered.</p>
-                </div>
-                <div className="rounded-full bg-midnight px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-amber-400 dark:text-slate-900">
-                  Total Spend: {currencyFormatter.format(totalSpend ?? 0)}
-                </div>
-              </div>
-
-              {purchaseHistoryQuery.isLoading && <p className="mt-6 text-sm text-slate-500">Loading history...</p>}
-              {!purchaseHistoryQuery.isLoading && purchaseHistory.length === 0 && (
-                <p className="mt-6 text-sm text-slate-500">No purchases yet. Explore the catalog to place your first order.</p>
-              )}
-              {purchaseHistory.length > 0 && (
-                <div className="mt-6 overflow-x-auto rounded-2xl border border-white/30 bg-white/90 shadow-inner dark:border-slate-700/50 dark:bg-slate-900/70">
-                  <table className="w-full table-auto text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-white/40 bg-white/70 text-xs uppercase tracking-widest text-slate-500 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-300">
-                        <th className="px-4 py-2">Product</th>
-                        <th className="px-4 py-2">SKU</th>
-                        <th className="px-4 py-2">Quantity</th>
-                        <th className="px-4 py-2">Total Paid</th>
-                        <th className="px-4 py-2">Purchased At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {purchaseHistory.map((purchase) => (
-                        <tr key={purchase.id} className="border-b border-white/20 last:border-none dark:border-slate-800/40">
-                          <td className="px-4 py-3 font-medium text-midnight dark:text-slate-100">{purchase.productName}</td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{purchase.productSku}</td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{purchase.quantity}</td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{currencyFormatter.format(purchase.totalPrice)}</td>
-                          <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{new Date(purchase.purchasedAt).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
           </div>
         )}
 
-        {activeSection === "DASHBOARD" && (
+        {activeSection === "BROWSE" && (
           <div className="space-y-8">
             <header className="space-y-2">
               <h2 className="text-3xl font-semibold text-midnight dark:text-white">Browse Products</h2>
