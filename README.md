@@ -7,7 +7,7 @@ Fullstack implementation powered by Spring Boot, PostgreSQL, and React. Module 1
 - Java 17+
 - Maven 3.9+
 - Node.js 18+
-- npm or yarn
+- npm
 - PostgreSQL (running locally, accessible via pgAdmin)
 
 ## Backend Setup (`backend/`)
